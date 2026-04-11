@@ -56,6 +56,17 @@ pnpm test
 
 Test files: `src/services/**/*.test.ts`
 
-### Database Mock
+### Fake Database
 
-Both E2E and integration tests use the in-memory fake database (`TARO_APP_ENV=test`) to avoid polluting production data. The fake database supports: `add`, `where`, `orderBy`, `limit`, `get`, `doc`, `remove`, `update`.
+Both E2E and integration tests use the in-memory fake database to avoid polluting production data. The fake database supports: `add`, `where`, `orderBy`, `limit`, `get`, `doc`, `remove`, `update`.
+
+## Build-time Constants
+
+Use `defineConstants` in `config/index.ts` for environment-specific values. Do not use `process.env` directly in source code — it doesn't exist at runtime in mini programs.
+
+Current constants:
+- `IS_TEST_ENV`: `true` when building with `TARO_APP_ENV=test`, otherwise `false`
+
+To add a new constant:
+1. Define in `config/index.ts` under `defineConstants`
+2. Declare type in the source file: `declare const MY_CONSTANT: string;`
