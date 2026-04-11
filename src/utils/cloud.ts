@@ -1,6 +1,6 @@
 import Taro from "@tarojs/taro";
 
-const isTest = process.env.TARO_APP_ENV === "test";
+declare const IS_TEST_ENV: boolean;
 
 // 内存数据库存储
 const memoryStore: Map<string, Record<string, unknown>[]> = new Map();
@@ -102,7 +102,7 @@ function getMemoryDatabase() {
 
 // 获取数据库实例
 export function getDatabase() {
-  if (isTest) {
+  if (IS_TEST_ENV) {
     return getMemoryDatabase();
   }
   return Taro.cloud.database();

@@ -1,5 +1,8 @@
 import { vi } from 'vitest';
 
+// Define IS_TEST_ENV for test environment
+(globalThis as unknown as { IS_TEST_ENV: boolean }).IS_TEST_ENV = true;
+
 // Mock Taro globals required by @tarojs/runtime
 globalThis.ENABLE_INNER_HTML = true;
 globalThis.ENABLE_ADJACENT_HTML = true;
