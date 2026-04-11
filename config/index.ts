@@ -22,6 +22,7 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
     ],
     defineConstants: {
       IS_TEST_ENV: JSON.stringify(process.env.TARO_APP_ENV === 'test'),
+      IS_E2E_ENV: JSON.stringify(process.env.TARO_APP_ENV === 'e2e'),
     },
     copy: {
       patterns: [

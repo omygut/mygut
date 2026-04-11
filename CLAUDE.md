@@ -34,7 +34,7 @@ After creating or updating a PR:
 
 ### E2E Tests
 
-E2E tests use `miniprogram-automator` to test the full mini program in WeChat DevTools. They require local environment and cannot run in CI.
+E2E tests use `miniprogram-automator` to test the full mini program in WeChat DevTools with **real cloud database**. They require local environment and cannot run in CI.
 
 Run locally after pushing:
 
@@ -46,9 +46,11 @@ Prerequisites:
 - WeChat DevTools installed with Service Port enabled (Settings > Security)
 - `.env.local` configured with valid appID and cloud environment
 
+Data isolation: E2E tests use a fixed test user ID (`e2e_test_user`) to avoid polluting real user data.
+
 ### Integration Tests
 
-Integration tests verify service layer logic using the in-memory fake database. They can run in CI.
+Integration tests verify service layer logic using the in-memory fake database. They run in CI.
 
 ```bash
 pnpm test
@@ -58,14 +60,15 @@ Test files: `src/services/**/*.test.ts`
 
 ### Fake Database
 
-Both E2E and integration tests use the in-memory fake database to avoid polluting production data. The fake database supports: `add`, `where`, `orderBy`, `limit`, `get`, `doc`, `remove`, `update`.
+Integration tests use the in-memory fake database (`TARO_APP_ENV=test`). The fake database supports: `add`, `where`, `orderBy`, `limit`, `get`, `doc`, `remove`, `update`.
 
 ## Build-time Constants
 
 Use `defineConstants` in `config/index.ts` for environment-specific values. Do not use `process.env` directly in source code — it doesn't exist at runtime in mini programs.
 
 Current constants:
-- `IS_TEST_ENV`: `true` when building with `TARO_APP_ENV=test`, otherwise `false`
+- `IS_TEST_ENV`: `true` when building with `TARO_APP_ENV=test` (integration tests, fake database)
+- `IS_E2E_ENV`: `true` when building with `TARO_APP_ENV=e2e` (E2E tests, real database + test user)
 
 To add a new constant:
 1. Define in `config/index.ts` under `defineConstants`

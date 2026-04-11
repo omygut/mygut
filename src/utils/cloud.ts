@@ -1,6 +1,9 @@
 import Taro from "@tarojs/taro";
 
 declare const IS_TEST_ENV: boolean;
+declare const IS_E2E_ENV: boolean;
+
+const E2E_TEST_USER_ID = "e2e_test_user";
 
 // 内存数据库存储
 const memoryStore: Map<string, Record<string, unknown>[]> = new Map();
@@ -112,6 +115,11 @@ export function getDatabase() {
 let cachedOpenId: string | null = null;
 
 export async function getOpenId(): Promise<string> {
+  // E2E 测试使用固定的测试用户 ID
+  if (IS_E2E_ENV) {
+    return E2E_TEST_USER_ID;
+  }
+
   if (cachedOpenId) {
     return cachedOpenId;
   }
