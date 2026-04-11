@@ -8,9 +8,17 @@ declare module 'miniprogram-automator' {
     port?: number;
   }
 
+  interface ConsoleMessage {
+    type: 'log' | 'info' | 'warn' | 'error';
+    args: unknown[];
+  }
+
   interface MiniProgram {
     /** Close the miniprogram */
     close(): Promise<void>;
+    /** Listen for events */
+    on(event: 'console', callback: (msg: ConsoleMessage) => void): void;
+    on(event: 'error', callback: (error: Error) => void): void;
     /** Navigate to a page */
     reLaunch(url: string): Promise<Page>;
     /** Navigate to a page */

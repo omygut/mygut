@@ -1,6 +1,6 @@
 import automator from 'miniprogram-automator';
 import path from 'path';
-import { setMiniProgram } from './setup';
+import { setMiniProgram, getConsoleErrors, clearConsoleErrors, addConsoleError } from './setup';
 
 describe('Health Records E2E', () => {
   let miniProgram: Awaited<ReturnType<typeof automator.launch>>;
@@ -11,12 +11,29 @@ describe('Health Records E2E', () => {
       projectPath: path.resolve(__dirname, '../dist'),
     });
     setMiniProgram(miniProgram);
+
+    // Listen for console errors
+    miniProgram.on('console', (msg: { type: string; args: unknown[] }) => {
+      if (msg.type === 'error' || msg.type === 'warn') {
+        const errorText = msg.args.map(arg => String(arg)).join(' ');
+        addConsoleError(`[${msg.type}] ${errorText}`);
+      }
+    });
   });
 
   afterAll(async () => {
     if (miniProgram) {
       await miniProgram.close();
       setMiniProgram(null);
+    }
+  });
+
+  afterEach(() => {
+    // Fail test if there are console errors
+    const errors = getConsoleErrors();
+    clearConsoleErrors();
+    if (errors.length > 0) {
+      throw new Error(`Console errors during test:\n${errors.join('\n')}`);
     }
   });
 

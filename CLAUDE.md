@@ -26,3 +26,15 @@ Examples:
 - `test: fix flaky navigation test`
 
 After creating a PR, monitor its CI status. If CI fails, investigate and fix promptly.
+
+## E2E Testing
+
+E2E tests require WeChat DevTools and cannot run in CI. After creating a PR, run E2E tests locally:
+
+```bash
+pnpm test:e2e
+```
+
+Prerequisites:
+- WeChat DevTools installed with Service Port enabled (Settings > Security)
+- `.env.local` configured with valid appID and cloud environment
