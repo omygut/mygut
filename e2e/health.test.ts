@@ -1,5 +1,6 @@
 import automator from 'miniprogram-automator';
 import path from 'path';
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { setMiniProgram, getConsoleErrors, clearConsoleErrors, addConsoleError } from './setup';
 
 describe('Health Records E2E', () => {
