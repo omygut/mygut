@@ -2,6 +2,7 @@ import { View, Text, Image, Button } from "@tarojs/components";
 import { useDidShow } from "@tarojs/taro";
 import { useState, useCallback } from "react";
 import { getUserSettings, getDefaultNickname } from "../../services/user";
+import { saveExportToFile } from "../../services/export";
 import ProfilePopup from "../../components/ProfilePopup";
 import "./index.css";
 
@@ -81,6 +82,15 @@ export default function Settings() {
           <Text className="about-label">名称</Text>
           <Text className="about-value">{APP_NAME}</Text>
         </View>
+      </View>
+
+      <View className="data-section">
+        <Text className="section-title">数据管理</Text>
+        <View className="data-item" onClick={saveExportToFile}>
+          <Text className="data-label">导出数据</Text>
+          <Text className="data-arrow">›</Text>
+        </View>
+        <Text className="data-hint">导出所有历史记录为 JSON 文件</Text>
       </View>
 
       <View className="contact-section">
