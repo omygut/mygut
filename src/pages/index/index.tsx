@@ -9,14 +9,6 @@ import { formatDate, getPrevDate, getNextDate, getWeekday } from "../../utils/da
 import type { SymptomRecord, MealRecord, StoolRecord, MedicationRecord } from "../../types";
 import "./index.css";
 
-const FEELING_MAP: Record<number, { emoji: string; label: string }> = {
-  1: { emoji: "😫", label: "很差" },
-  2: { emoji: "😟", label: "较差" },
-  3: { emoji: "😐", label: "一般" },
-  4: { emoji: "😊", label: "良好" },
-  5: { emoji: "😄", label: "很好" },
-};
-
 export default function Index() {
   const [currentDate, setCurrentDate] = useState(formatDate());
   const [loading, setLoading] = useState(true);
@@ -72,10 +64,6 @@ export default function Index() {
     Taro.navigateTo({ url: path });
   };
 
-  // 获取整体感受（取最新一条症状记录）
-  const overallFeeling = symptomRecords.length > 0 ? symptomRecords[0].overallFeeling : null;
-  const feelingInfo = overallFeeling ? FEELING_MAP[overallFeeling] : null;
-
   return (
     <View className="overview-page">
       {/* 日期选择器 */}
@@ -91,19 +79,6 @@ export default function Index() {
         <Text className="date-arrow" onClick={handleNextDate}>
           ▶
         </Text>
-      </View>
-
-      {/* 整体感受 */}
-      <View className="feeling-card">
-        <Text className="feeling-label">整体感受</Text>
-        {feelingInfo ? (
-          <View className="feeling-value">
-            <Text className="feeling-emoji">{feelingInfo.emoji}</Text>
-            <Text className="feeling-text">{feelingInfo.label}</Text>
-          </View>
-        ) : (
-          <Text className="feeling-empty">--</Text>
-        )}
       </View>
 
       {loading ? (
