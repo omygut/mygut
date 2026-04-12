@@ -20,6 +20,10 @@
   padding: 16px;
 }
 
+.date-arrow.disabled {
+  color: #ccc;
+}
+
 .date-text {
   font-size: 36px;
   font-weight: 600;

@@ -48,7 +48,11 @@ export default function Index() {
     loadData(newDate);
   };
 
+  const today = formatDate();
+  const isToday = currentDate === today;
+
   const handleNextDate = () => {
+    if (isToday) return;
     const newDate = getNextDate(currentDate);
     setCurrentDate(newDate);
     loadData(newDate);
@@ -71,12 +75,12 @@ export default function Index() {
         <Text className="date-arrow" onClick={handlePrevDate}>
           ◀
         </Text>
-        <Picker mode="date" value={currentDate} onChange={handleDateChange}>
+        <Picker mode="date" value={currentDate} end={today} onChange={handleDateChange}>
           <Text className="date-text">
             {currentDate} {getWeekday(currentDate)}
           </Text>
         </Picker>
-        <Text className="date-arrow" onClick={handleNextDate}>
+        <Text className={`date-arrow ${isToday ? "disabled" : ""}`} onClick={handleNextDate}>
           ▶
         </Text>
       </View>
