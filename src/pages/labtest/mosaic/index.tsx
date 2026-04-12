@@ -209,8 +209,8 @@ export default function MosaicEditor() {
     <View className="mosaic-page">
       <View className="tips">
         <Text className="tips-text">
-          为保护隐私，请用手指框选并遮盖化验单上的姓名、身份证号、住院号等个人信息。图片仅用于 AI
-          识别化验指标，处理后将存储在您的个人云空间。
+          请用手指框选并遮盖姓名、身份证号、住院号等个人信息。图片仅用于 AI
+          识别化验指标，除此之外只有您本人可以读写，其他人无法访问。
         </Text>
       </View>
 
