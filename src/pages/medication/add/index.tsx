@@ -1,6 +1,6 @@
 import { View, Text, Input, Textarea, Picker } from "@tarojs/components";
-import Taro, { useDidShow } from "@tarojs/taro";
-import { useState } from "react";
+import Taro, { useDidShow, useRouter } from "@tarojs/taro";
+import { useState, useEffect } from "react";
 import { medicationService } from "../../../services/medication";
 import { MEDICATION_CATEGORIES } from "../../../constants/medication";
 import { formatDate, formatTime } from "../../../utils/date";
@@ -32,15 +32,43 @@ function removeCustomMedication(medication: string) {
 }
 
 export default function MedicationAdd() {
+  const router = useRouter();
+  const editId = router.params.id;
+  const isEdit = !!editId;
+
   const [date, setDate] = useState(formatDate());
   const [time, setTime] = useState(formatTime());
   const [selectedCategory, setSelectedCategory] = useState(-1); // -1 = 常用
-  const [selectedMedications, setSelectedMedications] = useState<string[]>([]);
+  const [selectedMedication, setSelectedMedication] = useState("");
   const [manualInput, setManualInput] = useState("");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [customMedications, setCustomMedications] = useState<string[]>([]);
   const [topMedications, setTopMedications] = useState<string[]>([]);
+  const [loading, setLoading] = useState(isEdit);
+
+  useEffect(() => {
+    if (editId) {
+      loadRecord(editId);
+    }
+  }, [editId]);
+
+  const loadRecord = async (id: string) => {
+    try {
+      const record = await medicationService.getById(id);
+      if (record) {
+        setDate(record.date);
+        setTime(record.time || formatTime());
+        setSelectedMedication(record.name);
+        setNote(record.note || "");
+      }
+    } catch (error) {
+      console.error("加载记录失败:", error);
+      Taro.showToast({ title: "加载失败", icon: "none" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useDidShow(() => {
     setCustomMedications(getStoredCustomMedications());
@@ -49,10 +77,11 @@ export default function MedicationAdd() {
   });
 
   const handleMedicationClick = (medication: string) => {
-    if (selectedMedications.includes(medication)) {
-      setSelectedMedications(selectedMedications.filter((m) => m !== medication));
+    // 单选：点击选中，再点击取消
+    if (selectedMedication === medication) {
+      setSelectedMedication("");
     } else {
-      setSelectedMedications([...selectedMedications, medication]);
+      setSelectedMedication(medication);
     }
   };
 
@@ -62,11 +91,7 @@ export default function MedicationAdd() {
       Taro.showToast({ title: "请输入药物名称", icon: "none" });
       return;
     }
-    if (selectedMedications.includes(medication)) {
-      Taro.showToast({ title: "已添加该药物", icon: "none" });
-      return;
-    }
-    setSelectedMedications([...selectedMedications, medication]);
+    setSelectedMedication(medication);
     setManualInput("");
     if (!ALL_PRESET_MEDICATIONS.has(medication)) {
       saveCustomMedication(medication);
@@ -82,35 +107,62 @@ export default function MedicationAdd() {
     if (res.confirm) {
       removeCustomMedication(medication);
       setCustomMedications(getStoredCustomMedications());
-      setSelectedMedications(selectedMedications.filter((m) => m !== medication));
+      if (selectedMedication === medication) {
+        setSelectedMedication("");
+      }
     }
   };
 
-  const handleRemoveMedication = (medication: string) => {
-    setSelectedMedications(selectedMedications.filter((m) => m !== medication));
+  const handleClearMedication = () => {
+    setSelectedMedication("");
+  };
+
+  const handleDelete = async () => {
+    if (!editId) return;
+
+    const res = await Taro.showModal({
+      title: "确认删除",
+      content: "确定要删除这条记录吗？",
+    });
+
+    if (res.confirm) {
+      try {
+        await medicationService.delete(editId);
+        Taro.showToast({ title: "已删除", icon: "success" });
+        setTimeout(() => {
+          Taro.navigateBack();
+        }, 1500);
+      } catch {
+        Taro.showToast({ title: "删除失败", icon: "none" });
+      }
+    }
   };
 
   const handleSubmit = async () => {
     if (submitting) return;
 
-    if (selectedMedications.length === 0) {
+    if (!selectedMedication) {
       Taro.showToast({ title: "请选择或输入药物", icon: "none" });
       return;
     }
 
     setSubmitting(true);
     try {
-      // 为每个选中的药物创建一条记录
-      for (const medication of selectedMedications) {
-        await medicationService.add({
-          date,
-          time,
-          name: medication,
-          note: note.trim() || undefined,
-        });
+      const data = {
+        date,
+        time,
+        name: selectedMedication,
+        note: note.trim() || undefined,
+      };
+
+      if (isEdit && editId) {
+        await medicationService.update(editId, data);
+        Taro.showToast({ title: "更新成功", icon: "success" });
+      } else {
+        await medicationService.add(data);
+        Taro.showToast({ title: "记录成功", icon: "success" });
       }
 
-      Taro.showToast({ title: "记录成功", icon: "success" });
       setTimeout(() => {
         Taro.navigateBack();
       }, 1500);
@@ -131,6 +183,14 @@ export default function MedicationAdd() {
   // 当前分类的药品列表
   const currentMedications =
     selectedCategory === -1 ? myFavoriteMedications : MEDICATION_CATEGORIES[selectedCategory].items;
+
+  if (loading) {
+    return (
+      <View className="add-page">
+        <View className="loading">加载中...</View>
+      </View>
+    );
+  }
 
   return (
     <View className="add-page">
@@ -180,7 +240,7 @@ export default function MedicationAdd() {
               return (
                 <View
                   key={medication}
-                  className={`medication-item ${selectedMedications.includes(medication) ? "selected" : ""} ${isCustom ? "custom" : ""}`}
+                  className={`medication-item ${selectedMedication === medication ? "selected" : ""} ${isCustom ? "custom" : ""}`}
                   onClick={() => handleMedicationClick(medication)}
                   onLongPress={
                     isCustom ? () => handleDeleteCustomMedication(medication) : undefined
@@ -213,20 +273,14 @@ export default function MedicationAdd() {
       {/* 已选药物 */}
       <View className="section">
         <Text className="section-title">已选药物</Text>
-        {selectedMedications.length === 0 ? (
+        {!selectedMedication ? (
           <Text className="no-medication-hint">请从上方选择或输入药物</Text>
         ) : (
-          <View className="selected-medications">
-            {selectedMedications.map((medication) => (
-              <View
-                key={medication}
-                className="selected-medication-tag"
-                onClick={() => handleRemoveMedication(medication)}
-              >
-                <Text className="selected-medication-name">{medication}</Text>
-                <Text className="remove-medication-btn">×</Text>
-              </View>
-            ))}
+          <View className="selected-medication">
+            <Text className="selected-medication-name">{selectedMedication}</Text>
+            <Text className="clear-medication-btn" onClick={handleClearMedication}>
+              清除
+            </Text>
           </View>
         )}
       </View>
@@ -246,8 +300,13 @@ export default function MedicationAdd() {
       {/* 提交按钮 */}
       <View className="submit-section">
         <View className={`submit-btn ${submitting ? "disabled" : ""}`} onClick={handleSubmit}>
-          {submitting ? "保存中..." : "保存记录"}
+          {submitting ? "保存中..." : isEdit ? "更新记录" : "保存记录"}
         </View>
+        {isEdit && (
+          <View className="delete-btn" onClick={handleDelete}>
+            删除记录
+          </View>
+        )}
       </View>
     </View>
   );

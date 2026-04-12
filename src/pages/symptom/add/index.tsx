@@ -1,6 +1,6 @@
 import { View, Text, Textarea, Picker, Input } from "@tarojs/components";
-import Taro, { useDidShow } from "@tarojs/taro";
-import { useState } from "react";
+import Taro, { useDidShow, useRouter } from "@tarojs/taro";
+import { useState, useEffect } from "react";
 import { symptomService } from "../../../services/symptom";
 import { SYMPTOM_SHORTCUTS, SEVERITY_OPTIONS, FEELING_OPTIONS } from "../../../constants/symptom";
 import { formatDate, formatTime } from "../../../utils/date";
@@ -30,6 +30,10 @@ function removeCustomSymptom(symptom: string) {
 }
 
 export default function SymptomAdd() {
+  const router = useRouter();
+  const editId = router.params.id;
+  const isEdit = !!editId;
+
   const [date, setDate] = useState(formatDate());
   const [time, setTime] = useState(formatTime());
   const [symptoms, setSymptoms] = useState<string[]>([]);
@@ -39,6 +43,32 @@ export default function SymptomAdd() {
   const [overallFeeling, setOverallFeeling] = useState<1 | 2 | 3 | 4 | 5>(3);
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(isEdit);
+
+  useEffect(() => {
+    if (editId) {
+      loadRecord(editId);
+    }
+  }, [editId]);
+
+  const loadRecord = async (id: string) => {
+    try {
+      const record = await symptomService.getById(id);
+      if (record) {
+        setDate(record.date);
+        setTime(record.time || formatTime());
+        setSymptoms(record.symptoms);
+        setSeverity(record.severity);
+        setOverallFeeling(record.overallFeeling);
+        setNote(record.note || "");
+      }
+    } catch (error) {
+      console.error("加载记录失败:", error);
+      Taro.showToast({ title: "加载失败", icon: "none" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useDidShow(() => {
     setSavedCustomSymptoms(getStoredCustomSymptoms());
@@ -80,21 +110,49 @@ export default function SymptomAdd() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!editId) return;
+
+    const res = await Taro.showModal({
+      title: "确认删除",
+      content: "确定要删除这条记录吗？",
+    });
+
+    if (res.confirm) {
+      try {
+        await symptomService.delete(editId);
+        Taro.showToast({ title: "已删除", icon: "success" });
+        setTimeout(() => {
+          Taro.navigateBack();
+        }, 1500);
+      } catch {
+        Taro.showToast({ title: "删除失败", icon: "none" });
+      }
+    }
+  };
+
   const handleSubmit = async () => {
     if (submitting) return;
 
     setSubmitting(true);
     try {
-      await symptomService.add({
+      const data = {
         date,
         time,
         symptoms,
         severity: symptoms.length > 0 ? severity : undefined,
         overallFeeling,
         note: note.trim() || undefined,
-      });
+      };
 
-      Taro.showToast({ title: "记录成功", icon: "success" });
+      if (isEdit && editId) {
+        await symptomService.update(editId, data);
+        Taro.showToast({ title: "更新成功", icon: "success" });
+      } else {
+        await symptomService.add(data);
+        Taro.showToast({ title: "记录成功", icon: "success" });
+      }
+
       setTimeout(() => {
         Taro.navigateBack();
       }, 1500);
@@ -105,6 +163,14 @@ export default function SymptomAdd() {
       setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <View className="add-page">
+        <View className="loading">加载中...</View>
+      </View>
+    );
+  }
 
   return (
     <View className="add-page">
@@ -214,8 +280,13 @@ export default function SymptomAdd() {
       {/* 提交按钮 */}
       <View className="submit-section">
         <View className={`submit-btn ${submitting ? "disabled" : ""}`} onClick={handleSubmit}>
-          {submitting ? "保存中..." : "保存记录"}
+          {submitting ? "保存中..." : isEdit ? "更新记录" : "保存记录"}
         </View>
+        {isEdit && (
+          <View className="delete-btn" onClick={handleDelete}>
+            删除记录
+          </View>
+        )}
       </View>
     </View>
   );
