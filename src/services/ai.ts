@@ -2,7 +2,7 @@ import type { LabTestIndicator } from "../types";
 
 const MODEL = "Qwen/Qwen3-VL-32B-Instruct";
 
-const SYSTEM_PROMPT = `识别化验单图片中的指标，返回CSV格式（无表头）。
+const LAB_TEST_PROMPT = `识别化验单图片中的指标，返回CSV格式（无表头）。
 
 列：名称,数值,单位
 
@@ -11,6 +11,14 @@ const SYSTEM_PROMPT = `识别化验单图片中的指标，返回CSV格式（无
 红细胞,3.2,10^12/L
 
 只返回CSV，无其他文字。`;
+
+const IMAGING_PROMPT = `识别这张影像检查报告（B超/CT/MRI/肠镜/胃镜等）的检查结论。
+
+要求：
+1. 提取报告中的主要诊断结论
+2. 保持医学术语的准确性
+3. 简洁明了，不超过200字
+4. 只返回结论文字，无其他内容`;
 
 type MessageContent =
   | string
@@ -65,7 +73,7 @@ export async function recognizeLabTestImage(imageFilePath: string): Promise<LabT
         messages: [
           {
             role: "system",
-            content: SYSTEM_PROMPT,
+            content: LAB_TEST_PROMPT,
           },
           {
             role: "user",
@@ -123,6 +131,62 @@ export async function recognizeLabTestImage(imageFilePath: string): Promise<LabT
     }
 
     return indicators;
+  } catch (error) {
+    console.error("AI 识别失败:", error);
+    throw error;
+  }
+}
+
+export async function recognizeImagingReport(imageFilePath: string): Promise<string> {
+  try {
+    const base64 = await imageToBase64(imageFilePath);
+    const imageUrl = `data:image/jpeg;base64,${base64}`;
+
+    const res = await wx.cloud.extend.AI.createModel("siliconflow-custom").streamText({
+      data: {
+        model: MODEL,
+        messages: [
+          {
+            role: "system",
+            content: IMAGING_PROMPT,
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: {
+                  url: imageUrl,
+                },
+              },
+              {
+                type: "text",
+                text: "请识别这张检查报告的诊断结论。",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    let fullResponse = "";
+    for await (const event of res.eventStream) {
+      if (event.data === "[DONE]") {
+        break;
+      }
+      try {
+        const data = JSON.parse(event.data);
+        const text = data?.choices?.[0]?.delta?.content;
+        if (text) {
+          fullResponse += text;
+        }
+      } catch {
+        // 忽略解析错误
+      }
+    }
+
+    console.log("AI 响应:", fullResponse);
+    return fullResponse.trim();
   } catch (error) {
     console.error("AI 识别失败:", error);
     throw error;

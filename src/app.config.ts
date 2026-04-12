@@ -14,6 +14,8 @@ export default defineAppConfig({
     "pages/labtest/index/index",
     "pages/labtest/add/index",
     "pages/labtest/mosaic/index",
+    "pages/imaging/index/index",
+    "pages/imaging/add/index",
     "pages/privacy/index",
   ],
   window: {

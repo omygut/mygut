@@ -6,7 +6,9 @@ import { mealService } from "../../services/meal";
 import { stoolService } from "../../services/stool";
 import { medicationService } from "../../services/medication";
 import { labTestService } from "../../services/labtest";
+import { imagingService } from "../../services/imaging";
 import { formatDate, getPrevDate, getNextDate, getWeekday } from "../../utils/date";
+import { EXAM_TYPES } from "../../constants/imaging";
 import { SEVERITY_OPTIONS, FEELING_OPTIONS } from "../../constants/symptom";
 import { AMOUNT_OPTIONS } from "../../constants/meal";
 import { BRISTOL_TYPES, STOOL_AMOUNTS } from "../../constants/stool";
@@ -16,6 +18,7 @@ import type {
   StoolRecord,
   MedicationRecord,
   LabTestRecord,
+  ImagingRecord,
 } from "../../types";
 import "./index.css";
 
@@ -44,6 +47,10 @@ const getStoolAmountLabel = (amount: number): string => {
   return STOOL_AMOUNTS.find((a) => a.value === amount)?.label || "";
 };
 
+const getExamTypeInfo = (examType: string) => {
+  return EXAM_TYPES.find((t) => t.value === examType) || EXAM_TYPES[EXAM_TYPES.length - 1];
+};
+
 export default function Records() {
   const [currentDate, setCurrentDate] = useState(formatDate());
   const [loading, setLoading] = useState(true);
@@ -52,22 +59,25 @@ export default function Records() {
   const [stoolRecords, setStoolRecords] = useState<StoolRecord[]>([]);
   const [medicationRecords, setMedicationRecords] = useState<MedicationRecord[]>([]);
   const [labTestRecords, setLabTestRecords] = useState<LabTestRecord[]>([]);
+  const [imagingRecords, setImagingRecords] = useState<ImagingRecord[]>([]);
 
   const loadData = useCallback(async (date: string) => {
     setLoading(true);
     try {
-      const [symptoms, meals, stools, medications, labTests] = await Promise.all([
+      const [symptoms, meals, stools, medications, labTests, imagings] = await Promise.all([
         symptomService.getByDate(date),
         mealService.getByDate(date),
         stoolService.getByDate(date),
         medicationService.getByDate(date),
         labTestService.getByDate(date),
+        imagingService.getByDate(date),
       ]);
       setSymptomRecords(symptoms);
       setMealRecords(meals);
       setStoolRecords(stools);
       setMedicationRecords(medications);
       setLabTestRecords(labTests);
+      setImagingRecords(imagings);
     } catch (error) {
       console.error("加载数据失败:", error);
       Taro.showToast({ title: "加载失败", icon: "none" });
@@ -330,6 +340,49 @@ export default function Records() {
                     </Text>
                   </View>
                 ))
+              )}
+            </View>
+          </View>
+
+          {/* 影像检查记录 */}
+          <View className="record-card">
+            <View className="card-header">
+              <View
+                className="card-title-row"
+                onClick={() => handleNavigate("/pages/imaging/index/index")}
+              >
+                <Text className="card-icon">🩻</Text>
+                <Text className="card-title">影像</Text>
+                <Text className="card-count">[{imagingRecords.length}条]</Text>
+              </View>
+              <Text
+                className="card-add-btn"
+                onClick={() => handleNavigate("/pages/imaging/add/index")}
+              >
+                ＋
+              </Text>
+            </View>
+            <View className="card-content">
+              {imagingRecords.length === 0 ? (
+                <Text className="empty-hint">暂无记录</Text>
+              ) : (
+                imagingRecords.map((record) => {
+                  const examTypeInfo = getExamTypeInfo(record.examType);
+                  return (
+                    <View
+                      key={record._id}
+                      className="record-item"
+                      onClick={() => handleNavigate(`/pages/imaging/add/index?id=${record._id}`)}
+                    >
+                      <Text className="record-time">{record.time}</Text>
+                      <Text className="record-feeling">{examTypeInfo.emoji}</Text>
+                      <Text className="record-desc">
+                        {examTypeInfo.label}
+                        {record.imageFileIds.length > 0 && ` · ${record.imageFileIds.length}张图片`}
+                      </Text>
+                    </View>
+                  );
+                })
               )}
             </View>
           </View>
