@@ -563,5 +563,92 @@ export const STANDARD_INDICATORS: StandardIndicator[] = [
       "尿糖",
       "尿葡萄糖"
     ]
+  },
+  {
+    "category": "电解质",
+    "nameZh": "钾",
+    "abbr": "K",
+    "unit": "mmol/L",
+    "refMin": 3.5,
+    "refMax": 5.5,
+    "aliases": [
+      "血钾"
+    ]
+  },
+  {
+    "category": "电解质",
+    "nameZh": "钠",
+    "abbr": "Na",
+    "unit": "mmol/L",
+    "refMin": 135,
+    "refMax": 145,
+    "aliases": [
+      "血钠"
+    ]
+  },
+  {
+    "category": "电解质",
+    "nameZh": "氯",
+    "abbr": "Cl",
+    "unit": "mmol/L",
+    "refMin": 96,
+    "refMax": 111,
+    "aliases": [
+      "血氯"
+    ]
+  },
+  {
+    "category": "电解质",
+    "nameZh": "钙",
+    "abbr": "Ca",
+    "unit": "mmol/L",
+    "refMin": 2.11,
+    "refMax": 2.52,
+    "aliases": [
+      "血钙"
+    ]
+  },
+  {
+    "category": "电解质",
+    "nameZh": "校正钙",
+    "abbr": "cCa",
+    "unit": "mmol/L",
+    "refMin": 2.11,
+    "refMax": 2.52
+  },
+  {
+    "category": "电解质",
+    "nameZh": "镁",
+    "abbr": "Mg",
+    "unit": "mmol/L",
+    "refMin": 0.7,
+    "refMax": 1.1,
+    "aliases": [
+      "血镁"
+    ]
+  },
+  {
+    "category": "电解质",
+    "nameZh": "总二氧化碳",
+    "abbr": "TCO2",
+    "unit": "mmol/L",
+    "refMin": 20,
+    "refMax": 34,
+    "aliases": [
+      "二氧化碳结合力",
+      "CO2CP"
+    ]
+  },
+  {
+    "category": "血糖",
+    "nameZh": "葡萄糖",
+    "abbr": "Glu-S",
+    "unit": "mmol/L",
+    "refMin": 3.9,
+    "refMax": 6.1,
+    "aliases": [
+      "空腹血糖",
+      "血糖"
+    ]
   }
 ];
