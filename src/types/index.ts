@@ -62,16 +62,3 @@ export interface MedicationRecord {
   note?: string;
   createdAt: Date;
 }
-
-// 医疗检查记录
-export interface MedicalRecord {
-  _id?: string;
-  userId: string;
-  date: string;
-  type: "blood" | "stool" | "colonoscopy" | "gastroscopy" | "ct" | "ultrasound" | "other";
-  hospital?: string;
-  result?: string;
-  images?: string[];
-  note?: string;
-  createdAt: Date;
-}
