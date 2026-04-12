@@ -66,7 +66,7 @@ export default function Index() {
   const [stoolRecords, setStoolRecords] = useState<StoolRecord[]>([]);
   const [medicationRecords, setMedicationRecords] = useState<MedicationRecord[]>([]);
   const [userSettings, setUserSettings] = useState<{
-    userId: string;
+    _id: string;
     nickname?: string;
     avatar?: string;
   } | null>(null);
@@ -147,7 +147,7 @@ export default function Index() {
   };
 
   const displayNickname =
-    userSettings?.nickname || (userSettings?.userId ? getDefaultNickname(userSettings.userId) : "");
+    userSettings?.nickname || (userSettings?._id ? getDefaultNickname(userSettings._id) : "");
 
   return (
     <View className="overview-page">

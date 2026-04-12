@@ -4,8 +4,7 @@ import { getDatabase, getOpenId } from "../utils/cloud";
 const COLLECTION = "user_settings";
 
 interface UserSettings {
-  _id?: string;
-  userId: string;
+  _id: string; // 使用 userId 作为 _id
   nickname?: string;
   avatar?: string;
   createdAt?: Date;
@@ -18,10 +17,10 @@ export async function getUserSettings(): Promise<UserSettings> {
   const userId = await getOpenId();
 
   try {
-    const res = await db.collection(COLLECTION).where({ userId }).limit(1).get();
+    const res = (await db.collection(COLLECTION).doc(userId).get()) as { data: UserSettings | null };
 
-    if (res.data && res.data.length > 0) {
-      return res.data[0] as UserSettings;
+    if (res.data) {
+      return res.data;
     }
   } catch {
     // 用户设置不存在
@@ -29,7 +28,7 @@ export async function getUserSettings(): Promise<UserSettings> {
 
   // 返回默认值
   return {
-    userId,
+    _id: userId,
   };
 }
 
@@ -38,7 +37,7 @@ export function getDefaultNickname(userId: string): string {
   return `微信用户 ${userId.slice(-4)}`;
 }
 
-// 更新用户设置（如果不存在则创建）
+// 更新用户设置（使用 set 实现 upsert）
 export async function updateUserSettings(data: {
   nickname?: string;
   avatar?: string;
@@ -46,26 +45,22 @@ export async function updateUserSettings(data: {
   const db = getDatabase();
   const userId = await getOpenId();
 
-  // 查找现有记录
-  const res = await db.collection(COLLECTION).where({ userId }).limit(1).get();
-
-  if (res.data && res.data.length > 0) {
-    // 更新现有记录
-    const doc = res.data[0] as UserSettings;
+  // 先尝试更新
+  try {
     await db
       .collection(COLLECTION)
-      .doc(doc._id!)
+      .doc(userId)
       .update({
         data: {
           ...data,
           updatedAt: new Date(),
         },
       });
-  } else {
-    // 创建新记录
+  } catch {
+    // 记录不存在，创建新记录（指定 _id 为 userId）
     await db.collection(COLLECTION).add({
       data: {
-        userId,
+        _id: userId,
         ...data,
         createdAt: new Date(),
       },
