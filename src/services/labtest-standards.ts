@@ -1,5 +1,5 @@
 import type { LabTestIndicator } from "../types";
-import { STANDARD_INDICATORS } from "../data/lab-indicators";
+import { STANDARD_INDICATORS } from "../data/labtest-indicators";
 
 // 标准指标定义
 export interface StandardIndicator {

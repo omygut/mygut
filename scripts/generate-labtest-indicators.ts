@@ -1,12 +1,12 @@
 /**
- * 从 CSV 生成 lab-indicators.ts
- * 运行: pnpm tsx scripts/generate-lab-indicators.ts
+ * 从 CSV 生成 labtest-indicators.ts
+ * 运行: pnpm tsx scripts/generate-labtest-indicators.ts
  */
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 
-const csvPath = join(__dirname, "../src/data/lab-indicators.csv");
-const outputPath = join(__dirname, "../src/data/lab-indicators.ts");
+const csvPath = join(__dirname, "../src/data/labtest-indicators.csv");
+const outputPath = join(__dirname, "../src/data/labtest-indicators.ts");
 
 const csv = readFileSync(csvPath, "utf-8");
 const lines = csv.trim().split("\n");
@@ -46,10 +46,10 @@ const indicators = lines.slice(1).map((line) => {
   return obj;
 });
 
-const output = `// 此文件由 scripts/generate-lab-indicators.ts 自动生成
-// 请勿手动编辑，修改请编辑 src/data/lab-indicators.csv
+const output = `// 此文件由 scripts/generate-labtest-indicators.ts 自动生成
+// 请勿手动编辑，修改请编辑 src/data/labtest-indicators.csv
 
-import type { StandardIndicator } from "../services/lab-indicators";
+import type { StandardIndicator } from "../services/labtest-standards";
 
 export const STANDARD_INDICATORS: StandardIndicator[] = ${JSON.stringify(indicators, null, 2)};
 `;
