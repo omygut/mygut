@@ -22,8 +22,9 @@ export async function getUserSettings(): Promise<UserSettings> {
     if (res.data) {
       return res.data;
     }
-  } catch {
-    // 用户设置不存在
+  } catch (error) {
+    // 用户设置不存在，这是正常情况
+    console.debug("用户设置不存在，使用默认值");
   }
 
   // 返回默认值
