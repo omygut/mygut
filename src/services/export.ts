@@ -86,7 +86,7 @@ export async function saveExportToFile(): Promise<void> {
     // Show modal, user tap triggers shareFileMessage
     Taro.showModal({
       title: "数据已准备好",
-      content: "点击确定发送文件到聊天，可转发给自己或保存到收藏",
+      content: "点击确定将文件发送到聊天，可转发给「文件传输助手」保存",
       confirmText: "发送",
       success: (res) => {
         if (res.confirm) {
