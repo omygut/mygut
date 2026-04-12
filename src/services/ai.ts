@@ -1,8 +1,6 @@
-import Taro from "@tarojs/taro";
 import type { LabTestIndicator } from "../types";
 
-// 视觉模型 - 支持图片识别
-const VISION_MODEL = "Pro/moonshotai/Kimi-K2.5";
+const MODEL = "Pro/moonshotai/Kimi-K2.5";
 
 const SYSTEM_PROMPT = `你是一个专业的医学化验单识别助手。请分析用户上传的化验单图片，提取所有化验指标信息。
 
@@ -21,36 +19,56 @@ const SYSTEM_PROMPT = `你是一个专业的医学化验单识别助手。请分
 
 只返回 JSON 数组，不要包含其他文字说明。如果无法识别任何指标，返回空数组 []。`;
 
-/**
- * 将图片文件转换为 base64
- */
+type MessageContent =
+  | string
+  | Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>;
+
+interface Message {
+  role: string;
+  content: MessageContent;
+}
+
+declare const wx: {
+  cloud: {
+    extend: {
+      AI: {
+        createModel(name: string): {
+          streamText(options: {
+            data: { model: string; messages: Message[] };
+          }): Promise<{ eventStream: AsyncIterable<{ data: string }> }>;
+        };
+      };
+    };
+  };
+  getFileSystemManager(): {
+    readFile(options: {
+      filePath: string;
+      encoding: string;
+      success: (res: { data: string }) => void;
+      fail: (error: unknown) => void;
+    }): void;
+  };
+};
+
 async function imageToBase64(filePath: string): Promise<string> {
-  const fs = Taro.getFileSystemManager();
   return new Promise((resolve, reject) => {
-    fs.readFile({
+    wx.getFileSystemManager().readFile({
       filePath,
       encoding: "base64",
-      success: (res) => resolve(res.data as string),
+      success: (res) => resolve(res.data),
       fail: reject,
     });
   });
 }
 
-/**
- * 识别化验单图片中的指标
- */
 export async function recognizeLabTestImage(imageFilePath: string): Promise<LabTestIndicator[]> {
   try {
-    // 将图片转换为 base64
     const base64 = await imageToBase64(imageFilePath);
     const imageUrl = `data:image/jpeg;base64,${base64}`;
 
-    // 调用视觉模型（非流式）
-    const model = Taro.cloud.extend.AI.createModel("siliconflow-custom");
-
-    const res = await model.generateText({
+    const res = await wx.cloud.extend.AI.createModel("siliconflow-custom").streamText({
       data: {
-        model: VISION_MODEL,
+        model: MODEL,
         messages: [
           {
             role: "system",
@@ -75,7 +93,23 @@ export async function recognizeLabTestImage(imageFilePath: string): Promise<LabT
       },
     });
 
-    const fullResponse = res.text || "";
+    let fullResponse = "";
+    for await (const event of res.eventStream) {
+      if (event.data === "[DONE]") {
+        break;
+      }
+      try {
+        const data = JSON.parse(event.data);
+        const text = data?.choices?.[0]?.delta?.content;
+        if (text) {
+          fullResponse += text;
+        }
+      } catch {
+        // 忽略解析错误
+      }
+    }
+
+    console.log("AI 响应:", fullResponse);
 
     // 解析 JSON 响应
     const jsonMatch = fullResponse.match(/\[[\s\S]*\]/);
