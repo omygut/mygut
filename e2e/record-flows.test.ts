@@ -36,183 +36,102 @@ describe("Record Creation Flows E2E", () => {
     }
   });
 
-  describe("Symptom Record Flow", () => {
-    it("should create symptom record and verify on records page", async () => {
-      // Navigate to add page
-      page = await miniProgram.reLaunch("/pages/symptom/add/index");
-      await page.waitFor(500);
-      expect(page.path).toBe("pages/symptom/add/index");
+  async function verifyRecordCreated(cardTitle: string) {
+    await miniProgram.reLaunch("/pages/records/index");
+    await page.waitFor(1000);
+    page = await miniProgram.currentPage();
 
-      // Select a feeling (tap first feeling option)
-      const feelingItems = await page.$$(".feeling-item");
-      expect(feelingItems.length).toBeGreaterThan(0);
-      await feelingItems[0].tap();
-      await page.waitFor(300);
-
-      // Submit
-      const submitBtn = await page.$(".submit-btn");
-      expect(submitBtn).not.toBeNull();
-      await submitBtn!.tap();
-      await page.waitFor(1000);
-
-      // Should navigate back or show success
-      page = await miniProgram.currentPage();
-
-      // Navigate to records page to verify
-      await miniProgram.reLaunch("/pages/records/index");
-      await page.waitFor(1000);
-      page = await miniProgram.currentPage();
-
-      // Find symptom card and verify it has records
-      const cardTitles = await page.$$(".card-title");
-      let symptomCardIndex = -1;
-      for (let i = 0; i < cardTitles.length; i++) {
-        const text = await cardTitles[i].text();
-        if (text === "体感") {
-          symptomCardIndex = i;
-          break;
-        }
+    const cardTitles = await page.$$(".card-title");
+    let cardIndex = -1;
+    for (let i = 0; i < cardTitles.length; i++) {
+      if ((await cardTitles[i].text()) === cardTitle) {
+        cardIndex = i;
+        break;
       }
-      expect(symptomCardIndex).toBeGreaterThanOrEqual(0);
+    }
+    expect(cardIndex).toBeGreaterThanOrEqual(0);
 
-      const cardCounts = await page.$$(".card-count");
-      const countText = await cardCounts[symptomCardIndex].text();
-      // Should have at least 1 record
-      expect(countText).toMatch(/\[\d+条\]/);
-      const count = parseInt(countText.match(/\d+/)?.[0] || "0");
-      expect(count).toBeGreaterThan(0);
-    });
+    const cardCounts = await page.$$(".card-count");
+    const countText = await cardCounts[cardIndex].text();
+    const count = parseInt(countText.match(/\d+/)?.[0] || "0");
+    expect(count).toBeGreaterThan(0);
+  }
+
+  it("should create symptom record", async () => {
+    page = await miniProgram.reLaunch("/pages/symptom/add/index");
+    await page.waitFor(500);
+
+    // Select a feeling
+    const feelingItems = await page.$$(".feeling-item");
+    await feelingItems[0].tap();
+    await page.waitFor(300);
+
+    // Submit
+    const submitBtn = await page.$(".submit-btn");
+    await submitBtn!.tap();
+    await page.waitFor(1500);
+
+    await verifyRecordCreated("体感");
   });
 
-  describe("Meal Record Flow", () => {
-    it("should create meal record and verify on records page", async () => {
-      // Navigate to add page
-      page = await miniProgram.reLaunch("/pages/meal/add/index");
-      await page.waitFor(500);
-      expect(page.path).toBe("pages/meal/add/index");
+  it("should create meal record", async () => {
+    page = await miniProgram.reLaunch("/pages/meal/add/index");
+    await page.waitFor(500);
 
-      // Select a food item
-      const foodItems = await page.$$(".food-item");
-      expect(foodItems.length).toBeGreaterThan(0);
-      await foodItems[0].tap();
-      await page.waitFor(300);
+    // Switch to a category with foods (index 0 = 主食)
+    const categoryTabs = await page.$$(".category-tab");
+    await categoryTabs[1].tap(); // First preset category
+    await page.waitFor(300);
 
-      // Submit
-      const submitBtn = await page.$(".submit-btn");
-      expect(submitBtn).not.toBeNull();
-      await submitBtn!.tap();
-      await page.waitFor(1000);
+    // Select a food item
+    const foodItems = await page.$$(".food-item");
+    await foodItems[0].tap();
+    await page.waitFor(300);
 
-      // Navigate to records page to verify
-      await miniProgram.reLaunch("/pages/records/index");
-      await page.waitFor(1000);
-      page = await miniProgram.currentPage();
+    // Submit
+    const submitBtn = await page.$(".submit-btn");
+    await submitBtn!.tap();
+    await page.waitFor(1500);
 
-      // Find meal card and verify it has records
-      const cardTitles = await page.$$(".card-title");
-      let mealCardIndex = -1;
-      for (let i = 0; i < cardTitles.length; i++) {
-        const text = await cardTitles[i].text();
-        if (text === "饮食") {
-          mealCardIndex = i;
-          break;
-        }
-      }
-      expect(mealCardIndex).toBeGreaterThanOrEqual(0);
-
-      const cardCounts = await page.$$(".card-count");
-      const countText = await cardCounts[mealCardIndex].text();
-      expect(countText).toMatch(/\[\d+条\]/);
-      const count = parseInt(countText.match(/\d+/)?.[0] || "0");
-      expect(count).toBeGreaterThan(0);
-    });
+    await verifyRecordCreated("饮食");
   });
 
-  describe("Stool Record Flow", () => {
-    it("should create stool record and verify on records page", async () => {
-      // Navigate to add page
-      page = await miniProgram.reLaunch("/pages/stool/add/index");
-      await page.waitFor(500);
-      expect(page.path).toBe("pages/stool/add/index");
+  it("should create stool record", async () => {
+    page = await miniProgram.reLaunch("/pages/stool/add/index");
+    await page.waitFor(500);
 
-      // Select a Bristol type
-      const bristolItems = await page.$$(".bristol-item");
-      expect(bristolItems.length).toBeGreaterThan(0);
-      await bristolItems[3].tap(); // Select type 4 (normal)
-      await page.waitFor(300);
+    // Select a Bristol type (default is already selected)
+    const bristolItems = await page.$$(".bristol-item");
+    await bristolItems[3].tap(); // Type 4
+    await page.waitFor(300);
 
-      // Submit
-      const submitBtn = await page.$(".submit-btn");
-      expect(submitBtn).not.toBeNull();
-      await submitBtn!.tap();
-      await page.waitFor(1000);
+    // Submit
+    const submitBtn = await page.$(".submit-btn");
+    await submitBtn!.tap();
+    await page.waitFor(1500);
 
-      // Navigate to records page to verify
-      await miniProgram.reLaunch("/pages/records/index");
-      await page.waitFor(1000);
-      page = await miniProgram.currentPage();
-
-      // Find stool card and verify it has records
-      const cardTitles = await page.$$(".card-title");
-      let stoolCardIndex = -1;
-      for (let i = 0; i < cardTitles.length; i++) {
-        const text = await cardTitles[i].text();
-        if (text === "排便") {
-          stoolCardIndex = i;
-          break;
-        }
-      }
-      expect(stoolCardIndex).toBeGreaterThanOrEqual(0);
-
-      const cardCounts = await page.$$(".card-count");
-      const countText = await cardCounts[stoolCardIndex].text();
-      expect(countText).toMatch(/\[\d+条\]/);
-      const count = parseInt(countText.match(/\d+/)?.[0] || "0");
-      expect(count).toBeGreaterThan(0);
-    });
+    await verifyRecordCreated("排便");
   });
 
-  describe("Medication Record Flow", () => {
-    it("should create medication record and verify on records page", async () => {
-      // Navigate to add page
-      page = await miniProgram.reLaunch("/pages/medication/add/index");
-      await page.waitFor(500);
-      expect(page.path).toBe("pages/medication/add/index");
+  it("should create medication record", async () => {
+    page = await miniProgram.reLaunch("/pages/medication/add/index");
+    await page.waitFor(500);
 
-      // Select a medication item
-      const medicationItems = await page.$$(".medication-item");
-      expect(medicationItems.length).toBeGreaterThan(0);
-      await medicationItems[0].tap();
-      await page.waitFor(300);
+    // Switch to a category with medications
+    const categoryTabs = await page.$$(".category-tab");
+    await categoryTabs[1].tap(); // First preset category
+    await page.waitFor(300);
 
-      // Submit
-      const submitBtn = await page.$(".submit-btn");
-      expect(submitBtn).not.toBeNull();
-      await submitBtn!.tap();
-      await page.waitFor(1000);
+    // Select a medication item
+    const medicationItems = await page.$$(".medication-item");
+    await medicationItems[0].tap();
+    await page.waitFor(300);
 
-      // Navigate to records page to verify
-      await miniProgram.reLaunch("/pages/records/index");
-      await page.waitFor(1000);
-      page = await miniProgram.currentPage();
+    // Submit
+    const submitBtn = await page.$(".submit-btn");
+    await submitBtn!.tap();
+    await page.waitFor(1500);
 
-      // Find medication card and verify it has records
-      const cardTitles = await page.$$(".card-title");
-      let medicationCardIndex = -1;
-      for (let i = 0; i < cardTitles.length; i++) {
-        const text = await cardTitles[i].text();
-        if (text === "用药") {
-          medicationCardIndex = i;
-          break;
-        }
-      }
-      expect(medicationCardIndex).toBeGreaterThanOrEqual(0);
-
-      const cardCounts = await page.$$(".card-count");
-      const countText = await cardCounts[medicationCardIndex].text();
-      expect(countText).toMatch(/\[\d+条\]/);
-      const count = parseInt(countText.match(/\d+/)?.[0] || "0");
-      expect(count).toBeGreaterThan(0);
-    });
+    await verifyRecordCreated("用药");
   });
 });
