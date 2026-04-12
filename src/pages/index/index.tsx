@@ -151,8 +151,9 @@ export default function Index() {
 
   return (
     <View className="overview-page">
-      {/* 顶部栏：头像 + 日期选择器 */}
+      {/* 顶部栏：App 名称 + 头像 */}
       <View className="top-header">
+        <Text className="app-title">MyGut</Text>
         <View className="header-avatar" onClick={handleAvatarClick}>
           {userSettings?.avatar ? (
             <Image className="avatar-img" src={userSettings.avatar} mode="aspectFill" />
@@ -160,19 +161,21 @@ export default function Index() {
             <View className="avatar-default" />
           )}
         </View>
-        <View className="date-selector">
-          <Text className="date-arrow" onClick={handlePrevDate}>
-            ◀
+      </View>
+
+      {/* 日期选择器 */}
+      <View className="date-selector">
+        <Text className="date-arrow" onClick={handlePrevDate}>
+          ◀
+        </Text>
+        <Picker mode="date" value={currentDate} end={today} onChange={handleDateChange}>
+          <Text className="date-text">
+            {currentDate} {getWeekday(currentDate)}
           </Text>
-          <Picker mode="date" value={currentDate} end={today} onChange={handleDateChange}>
-            <Text className="date-text">
-              {currentDate} {getWeekday(currentDate)}
-            </Text>
-          </Picker>
-          <Text className={`date-arrow ${isToday ? "disabled" : ""}`} onClick={handleNextDate}>
-            ▶
-          </Text>
-        </View>
+        </Picker>
+        <Text className={`date-arrow ${isToday ? "disabled" : ""}`} onClick={handleNextDate}>
+          ▶
+        </Text>
       </View>
 
       <ProfilePopup

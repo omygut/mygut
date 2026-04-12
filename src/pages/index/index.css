@@ -7,10 +7,16 @@
 /* 顶部栏 */
 .top-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   padding: 24px 32px;
   background-color: #fff;
-  gap: 24px;
+}
+
+.app-title {
+  font-size: 40px;
+  font-weight: 700;
+  color: #07c160;
 }
 
 .header-avatar {
@@ -37,7 +43,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  flex: 1;
+  padding: 20px 32px;
+  background-color: #fff;
+  border-top: 1px solid #f0f0f0;
   gap: 24px;
 }
 
