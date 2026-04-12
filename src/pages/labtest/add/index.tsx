@@ -22,6 +22,8 @@ export default function LabTestAdd() {
   // 已上传到云存储的 fileId（编辑模式）
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [recognizing, setRecognizing] = useState(false);
+  const [indicators, setIndicators] = useState<LabTestIndicator[]>([]);
   const [loading, setLoading] = useState(isEdit);
 
   const localImagesRef = useRef(localImages);
@@ -111,6 +113,39 @@ export default function LabTestAdd() {
     }
   };
 
+  const handleRecognize = async () => {
+    if (recognizing) return;
+
+    const totalImages = localImages.length + uploadedImages.length;
+    if (totalImages === 0) {
+      Taro.showToast({ title: "请先添加图片", icon: "none" });
+      return;
+    }
+
+    setRecognizing(true);
+    try {
+      Taro.showLoading({ title: "识别中..." });
+      // 识别本地图片
+      const recognitionPromises = localImages.map((path) => recognizeLabTestImage(path));
+      const recognitionResults = await Promise.all(recognitionPromises);
+      const newIndicators = recognitionResults.flat();
+      setIndicators(newIndicators);
+      Taro.hideLoading();
+
+      if (newIndicators.length === 0) {
+        Taro.showToast({ title: "未识别到指标", icon: "none" });
+      } else {
+        Taro.showToast({ title: `识别到 ${newIndicators.length} 项指标`, icon: "success" });
+      }
+    } catch (error) {
+      console.error("识别失败:", error);
+      Taro.hideLoading();
+      Taro.showToast({ title: "识别失败", icon: "none" });
+    } finally {
+      setRecognizing(false);
+    }
+  };
+
   const handleDeleteRecord = async () => {
     if (!editId) return;
 
@@ -147,17 +182,7 @@ export default function LabTestAdd() {
 
     setSubmitting(true);
     try {
-      // 1. AI 识别本地图片中的指标
-      let newIndicators: LabTestIndicator[] = [];
-      if (localImages.length > 0) {
-        Taro.showLoading({ title: "识别中..." });
-        const recognitionPromises = localImages.map((path) => recognizeLabTestImage(path));
-        const recognitionResults = await Promise.all(recognitionPromises);
-        newIndicators = recognitionResults.flat();
-        Taro.hideLoading();
-      }
-
-      // 2. 上传本地图片到云存储
+      // 上传本地图片到云存储
       let newFileIds: string[] = [];
       if (localImages.length > 0) {
         Taro.showLoading({ title: "上传中..." });
@@ -173,7 +198,7 @@ export default function LabTestAdd() {
         time,
         type,
         imageFileIds,
-        indicators: newIndicators,
+        indicators,
       };
 
       if (isEdit && editId) {
@@ -278,6 +303,41 @@ export default function LabTestAdd() {
           )}
         </View>
       </View>
+
+      {/* AI 识别 */}
+      {totalImages > 0 && (
+        <View className="section">
+          <View className="section-header">
+            <Text className="section-title">识别结果</Text>
+            <View
+              className={`recognize-btn ${recognizing ? "disabled" : ""}`}
+              onClick={handleRecognize}
+            >
+              {recognizing ? "识别中..." : "AI 识别"}
+            </View>
+          </View>
+          {indicators.length > 0 ? (
+            <View className="indicators-list">
+              {indicators.map((indicator, index) => (
+                <View
+                  key={index}
+                  className={`indicator-item ${indicator.abnormal ? "abnormal" : ""}`}
+                >
+                  <Text className="indicator-name">{indicator.name}</Text>
+                  <Text className="indicator-value">
+                    {indicator.value} {indicator.unit || ""}
+                  </Text>
+                  {indicator.reference && (
+                    <Text className="indicator-reference">参考: {indicator.reference}</Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text className="no-indicators">点击"AI 识别"按钮识别化验指标</Text>
+          )}
+        </View>
+      )}
 
       {/* 提交按钮 */}
       <View className="submit-section">
