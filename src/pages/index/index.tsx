@@ -7,6 +7,8 @@ import { getStoolRecordsByDate } from "../../services/stool";
 import { getMedicationRecordsByDate } from "../../services/medication";
 import { formatDate, getPrevDate, getNextDate, getWeekday } from "../../utils/date";
 import { SYMPTOM_TYPES, SEVERITY_OPTIONS, FEELING_OPTIONS } from "../../constants/symptom";
+import { AMOUNT_OPTIONS } from "../../constants/meal";
+import { BRISTOL_TYPES, STOOL_AMOUNTS } from "../../constants/stool";
 import type {
   SymptomRecord,
   MealRecord,
@@ -24,6 +26,34 @@ const formatSymptom = (symptom: Symptom): string => {
   const typeLabel = SYMPTOM_TYPES.find((t) => t.value === symptom.type)?.label || symptom.type;
   const severityLabel = SEVERITY_OPTIONS.find((s) => s.value === symptom.severity)?.label || "";
   return `${typeLabel}(${severityLabel})`;
+};
+
+const getAmountEmoji = (amount: number): string => {
+  return AMOUNT_OPTIONS.find((a) => a.value === amount)?.emoji || "🍚";
+};
+
+const getBristolEmoji = (type: number): string => {
+  return BRISTOL_TYPES.find((b) => b.value === type)?.emoji || "";
+};
+
+const getStoolAmountLabel = (amount: number): string => {
+  return STOOL_AMOUNTS.find((a) => a.value === amount)?.label || "";
+};
+
+const formatStoolAbnormal = (record: StoolRecord): string => {
+  const abnormals: string[] = [];
+  if (record.hasBlood) abnormals.push("带血");
+  if (record.hasMucus) abnormals.push("带粘液");
+  if (record.color !== "normal") {
+    const colorLabels: Record<string, string> = {
+      dark: "深色",
+      light: "浅色",
+      red: "带红",
+      black: "黑色",
+    };
+    abnormals.push(colorLabels[record.color] || "");
+  }
+  return abnormals.length > 0 ? abnormals.join("、") : "";
 };
 
 export default function Index() {
@@ -168,6 +198,7 @@ export default function Index() {
                 mealRecords.slice(0, 3).map((record) => (
                   <View key={record._id} className="record-item">
                     <Text className="record-time">{record.time}</Text>
+                    <Text className="record-feeling">{getAmountEmoji(record.amount)}</Text>
                     <Text className="record-desc">{record.foods.join("、")}</Text>
                   </View>
                 ))
@@ -197,12 +228,19 @@ export default function Index() {
               {stoolRecords.length === 0 ? (
                 <Text className="empty-hint">暂无记录</Text>
               ) : (
-                stoolRecords.slice(0, 3).map((record) => (
-                  <View key={record._id} className="record-item">
-                    <Text className="record-time">{record.time}</Text>
-                    <Text className="record-desc">类型{record.type}</Text>
-                  </View>
-                ))
+                stoolRecords.slice(0, 3).map((record) => {
+                  const abnormal = formatStoolAbnormal(record);
+                  return (
+                    <View key={record._id} className="record-item">
+                      <Text className="record-time">{record.time}</Text>
+                      <Text className="record-feeling">{getBristolEmoji(record.type)}</Text>
+                      <Text className="record-desc">
+                        {getStoolAmountLabel(record.amount)}
+                        {abnormal && ` · ${abnormal}`}
+                      </Text>
+                    </View>
+                  );
+                })
               )}
             </View>
           </View>
