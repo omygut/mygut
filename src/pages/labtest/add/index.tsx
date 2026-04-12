@@ -352,6 +352,15 @@ export default function LabTestAdd() {
                         ? `≤${ind.refMax}`
                         : "-");
 
+                // 判断值是否超出参考范围
+                const getAbnormalFlag = (ind: (typeof indicators)[0]) => {
+                  const numValue = parseFloat(ind.value);
+                  if (isNaN(numValue)) return "";
+                  if (ind.refMin !== undefined && numValue < ind.refMin) return "↓";
+                  if (ind.refMax !== undefined && numValue > ind.refMax) return "↑";
+                  return "";
+                };
+
                 return Object.entries(groups).map(([category, items]) => (
                   <View key={category} className="indicator-group">
                     <Text className="indicator-group-title">{category}</Text>
@@ -362,14 +371,24 @@ export default function LabTestAdd() {
                         <Text className="indicator-col-unit">单位</Text>
                         <Text className="indicator-col-ref">参考</Text>
                       </View>
-                      {items.map((ind, idx) => (
-                        <View key={idx} className="indicator-table-row">
-                          <Text className="indicator-col-name">{ind.name}</Text>
-                          <Text className="indicator-col-value">{ind.value}</Text>
-                          <Text className="indicator-col-unit">{ind.unit || "-"}</Text>
-                          <Text className="indicator-col-ref">{getRefText(ind)}</Text>
-                        </View>
-                      ))}
+                      {items.map((ind, idx) => {
+                        const abnormalFlag = getAbnormalFlag(ind);
+                        return (
+                          <View key={idx} className="indicator-table-row">
+                            <Text className="indicator-col-name">{ind.name}</Text>
+                            <Text
+                              className={`indicator-col-value ${abnormalFlag ? "abnormal" : ""}`}
+                            >
+                              {ind.value}
+                              {abnormalFlag && (
+                                <Text className="abnormal-flag">{abnormalFlag}</Text>
+                              )}
+                            </Text>
+                            <Text className="indicator-col-unit">{ind.unit || "-"}</Text>
+                            <Text className="indicator-col-ref">{getRefText(ind)}</Text>
+                          </View>
+                        );
+                      })}
                     </View>
                   </View>
                 ));
