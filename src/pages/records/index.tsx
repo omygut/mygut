@@ -322,8 +322,8 @@ export default function Records() {
                   >
                     <Text className="record-time">{record.time}</Text>
                     <Text className="record-desc">
-                      {record.type}
-                      {record.imageFileIds.length > 0 && ` · ${record.imageFileIds.length}张图片`}
+                      {record.imageFileIds.length}张图片
+                      {record.indicators.length > 0 && ` · ${record.indicators.length}项指标`}
                     </Text>
                   </View>
                 ))

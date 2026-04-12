@@ -5,7 +5,6 @@ import { labTestService } from "../../../services/labtest";
 import { recognizeLabTestImage } from "../../../services/ai";
 import { chooseImage, uploadImage, deleteCloudFile } from "../../../utils/upload";
 import { formatDate, formatTime } from "../../../utils/date";
-import { LABTEST_TYPES } from "../../../constants/labtest";
 import type { LabTestIndicator } from "../../../types";
 import "./index.css";
 
@@ -16,7 +15,6 @@ export default function LabTestAdd() {
 
   const [date, setDate] = useState(formatDate());
   const [time, setTime] = useState(formatTime());
-  const [type, setType] = useState(LABTEST_TYPES[0]);
   // 本地待上传的图片路径
   const [localImages, setLocalImages] = useState<string[]>([]);
   // 已上传到云存储的 fileId（编辑模式）
@@ -52,7 +50,6 @@ export default function LabTestAdd() {
       if (record) {
         setDate(record.date);
         setTime(record.time || formatTime());
-        setType(record.type);
         setUploadedImages(record.imageFileIds || []);
         setIndicators(record.indicators || []);
       }
@@ -197,7 +194,6 @@ export default function LabTestAdd() {
       const data = {
         date,
         time,
-        type,
         imageFileIds,
         indicators,
       };
@@ -244,22 +240,6 @@ export default function LabTestAdd() {
           <Picker mode="time" value={time} onChange={(e) => setTime(e.detail.value)}>
             <View className="picker-value">{time}</View>
           </Picker>
-        </View>
-      </View>
-
-      {/* 化验类型 */}
-      <View className="section">
-        <Text className="section-title">化验类型</Text>
-        <View className="type-options">
-          {LABTEST_TYPES.map((t) => (
-            <View
-              key={t}
-              className={`type-item ${type === t ? "active" : ""}`}
-              onClick={() => setType(t)}
-            >
-              {t}
-            </View>
-          ))}
         </View>
       </View>
 
