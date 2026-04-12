@@ -1,20 +1,54 @@
 import { View, Text, Input, Textarea, Picker } from "@tarojs/components";
-import Taro from "@tarojs/taro";
+import Taro, { useDidShow } from "@tarojs/taro";
 import { useState } from "react";
 import { mealService } from "../../../services/meal";
 import { FOOD_CATEGORIES, AMOUNT_OPTIONS } from "../../../constants/meal";
 import { formatDate, formatTime } from "../../../utils/date";
 import "./index.css";
 
+const CUSTOM_FOODS_KEY = "custom_foods";
+
+// 所有预设食物的集合（用于判断是否为自定义食物）
+const ALL_PRESET_FOODS = new Set(FOOD_CATEGORIES.flatMap((cat) => cat.items));
+
+function getStoredCustomFoods(): string[] {
+  const stored = Taro.getStorageSync(CUSTOM_FOODS_KEY);
+  return Array.isArray(stored) ? stored : [];
+}
+
+function saveCustomFood(food: string) {
+  const existing = getStoredCustomFoods();
+  if (!existing.includes(food)) {
+    Taro.setStorageSync(CUSTOM_FOODS_KEY, [...existing, food]);
+  }
+}
+
+function removeCustomFood(food: string) {
+  const existing = getStoredCustomFoods();
+  Taro.setStorageSync(
+    CUSTOM_FOODS_KEY,
+    existing.filter((f) => f !== food),
+  );
+}
+
 export default function MealAdd() {
   const [date, setDate] = useState(formatDate());
   const [time, setTime] = useState(formatTime());
-  const [selectedCategory, setSelectedCategory] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState(-1); // -1 = 我的常用
   const [selectedFoods, setSelectedFoods] = useState<string[]>([]);
   const [manualInput, setManualInput] = useState("");
   const [amount, setAmount] = useState<1 | 2 | 3>(2);
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [customFoods, setCustomFoods] = useState<string[]>([]);
+  const [topFoods, setTopFoods] = useState<string[]>([]);
+
+  useDidShow(() => {
+    setCustomFoods(getStoredCustomFoods());
+    // 只保留预设食物中的高频食物
+    const foods = mealService.getTopFoods(10);
+    setTopFoods(foods.filter((f) => ALL_PRESET_FOODS.has(f)));
+  });
 
   const handleFoodClick = (food: string) => {
     if (selectedFoods.includes(food)) {
@@ -36,6 +70,23 @@ export default function MealAdd() {
     }
     setSelectedFoods([...selectedFoods, food]);
     setManualInput("");
+    // 如果不在预设中，保存到自定义列表
+    if (!ALL_PRESET_FOODS.has(food)) {
+      saveCustomFood(food);
+      setCustomFoods(getStoredCustomFoods());
+    }
+  };
+
+  const handleDeleteCustomFood = async (food: string) => {
+    const res = await Taro.showModal({
+      title: "删除食物",
+      content: `确定要删除"${food}"吗？`,
+    });
+    if (res.confirm) {
+      removeCustomFood(food);
+      setCustomFoods(getStoredCustomFoods());
+      setSelectedFoods(selectedFoods.filter((f) => f !== food));
+    }
   };
 
   const handleRemoveFood = (food: string) => {
@@ -72,7 +123,12 @@ export default function MealAdd() {
     }
   };
 
-  const currentCategory = FOOD_CATEGORIES[selectedCategory];
+  // 「我的常用」的食物列表：自定义食物 + 预设高频食物
+  const myFavoriteFoods = [...customFoods, ...topFoods.filter((f) => !customFoods.includes(f))];
+
+  // 当前分类的食物列表
+  const currentFoods =
+    selectedCategory === -1 ? myFavoriteFoods : [...FOOD_CATEGORIES[selectedCategory].items];
 
   return (
     <View className="add-page">
@@ -95,6 +151,12 @@ export default function MealAdd() {
 
         {/* 分类标签 */}
         <View className="category-tabs">
+          <View
+            className={`category-tab ${selectedCategory === -1 ? "active" : ""}`}
+            onClick={() => setSelectedCategory(-1)}
+          >
+            我的常用
+          </View>
           {FOOD_CATEGORIES.map((cat, index) => (
             <View
               key={cat.name}
@@ -108,15 +170,23 @@ export default function MealAdd() {
 
         {/* 食物网格 */}
         <View className="food-grid">
-          {currentCategory.items.map((food) => (
-            <View
-              key={food}
-              className={`food-item ${selectedFoods.includes(food) ? "selected" : ""}`}
-              onClick={() => handleFoodClick(food)}
-            >
-              {food}
-            </View>
-          ))}
+          {currentFoods.length === 0 ? (
+            <Text className="no-food-hint">暂无常用食物，请从其他分类选择或手动输入</Text>
+          ) : (
+            currentFoods.map((food) => {
+              const isCustom = selectedCategory === -1 && customFoods.includes(food);
+              return (
+                <View
+                  key={food}
+                  className={`food-item ${selectedFoods.includes(food) ? "selected" : ""} ${isCustom ? "custom" : ""}`}
+                  onClick={() => handleFoodClick(food)}
+                  onLongPress={isCustom ? () => handleDeleteCustomFood(food) : undefined}
+                >
+                  {food}
+                </View>
+              );
+            })
+          )}
         </View>
 
         {/* 手动输入 */}
@@ -126,6 +196,7 @@ export default function MealAdd() {
             placeholder="输入其他食物"
             value={manualInput}
             onInput={(e) => setManualInput(e.detail.value)}
+            onConfirm={handleManualAdd}
           />
           <View className="manual-add-btn" onClick={handleManualAdd}>
             添加

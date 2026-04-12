@@ -45,6 +45,14 @@
   color: #1890ff;
 }
 
+.food-item.custom {
+  border: 2px dashed #d9d9d9;
+}
+
+.food-item.custom.selected {
+  border-color: #1890ff;
+}
+
 /* 手动输入 */
 .manual-input-row {
   display: flex;
