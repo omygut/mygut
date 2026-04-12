@@ -8,8 +8,15 @@ import "./index.css";
 
 const CUSTOM_FOODS_KEY = "custom_foods";
 
-// 所有预设食物的集合（用于判断是否为自定义食物）
-const ALL_PRESET_FOODS = new Set(FOOD_CATEGORIES.flatMap((cat) => cat.items));
+// 所有预设食物的名称集合（用于判断是否为自定义食物）
+const ALL_PRESET_FOODS = new Set(
+  FOOD_CATEGORIES.flatMap((cat) => cat.items.map((item) => item.name)),
+);
+
+// 食物名称到 emoji 的映射
+const FOOD_EMOJI_MAP = new Map(
+  FOOD_CATEGORIES.flatMap((cat) => cat.items.map((item) => [item.name, item.emoji])),
+);
 
 function getStoredCustomFoods(): string[] {
   const stored = Taro.getStorageSync(CUSTOM_FOODS_KEY);
@@ -126,9 +133,11 @@ export default function MealAdd() {
   // 「我的常用」的食物列表：自定义食物 + 预设高频食物
   const myFavoriteFoods = [...customFoods, ...topFoods.filter((f) => !customFoods.includes(f))];
 
-  // 当前分类的食物列表
+  // 当前分类的食物列表（统一为 { name, emoji } 格式）
   const currentFoods =
-    selectedCategory === -1 ? myFavoriteFoods : [...FOOD_CATEGORIES[selectedCategory].items];
+    selectedCategory === -1
+      ? myFavoriteFoods.map((name) => ({ name, emoji: FOOD_EMOJI_MAP.get(name) }))
+      : FOOD_CATEGORIES[selectedCategory].items;
 
   return (
     <View className="add-page">
@@ -174,15 +183,16 @@ export default function MealAdd() {
             <Text className="no-food-hint">暂无常用食物，请从其他分类选择或手动输入</Text>
           ) : (
             currentFoods.map((food) => {
-              const isCustom = selectedCategory === -1 && customFoods.includes(food);
+              const isCustom = selectedCategory === -1 && customFoods.includes(food.name);
               return (
                 <View
-                  key={food}
-                  className={`food-item ${selectedFoods.includes(food) ? "selected" : ""} ${isCustom ? "custom" : ""}`}
-                  onClick={() => handleFoodClick(food)}
-                  onLongPress={isCustom ? () => handleDeleteCustomFood(food) : undefined}
+                  key={food.name}
+                  className={`food-item ${selectedFoods.includes(food.name) ? "selected" : ""} ${isCustom ? "custom" : ""}`}
+                  onClick={() => handleFoodClick(food.name)}
+                  onLongPress={isCustom ? () => handleDeleteCustomFood(food.name) : undefined}
                 >
-                  {food}
+                  {food.emoji && <Text className="food-emoji">{food.emoji}</Text>}
+                  <Text className="food-name">{food.name}</Text>
                 </View>
               );
             })
