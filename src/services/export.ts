@@ -75,10 +75,13 @@ export async function saveExportToFile(): Promise<void> {
     const date = new Date().toISOString().split("T")[0];
     const fileName = `mygut-export-${date}.json`;
 
-    // @ts-ignore - saveFileToPlatform is not in Taro types yet
-    await Taro.saveFileToPlatform({
-      filePath: tempFilePath,
-      fileName,
+    await new Promise<void>((resolve, reject) => {
+      wx.saveFileToPlatform({
+        filePath: tempFilePath,
+        fileName,
+        success: () => resolve(),
+        fail: (err: { errMsg?: string }) => reject(err),
+      });
     });
 
     Taro.showToast({ title: "导出成功", icon: "success" });
