@@ -9,9 +9,10 @@ export interface StandardIndicator {
   refValue?: string;
   refMin?: number;
   refMax?: number;
+  aliases?: string[];
 }
 
-// 标准指标库（从 CSV 转换）
+// 标准指标库
 const STANDARD_INDICATORS: StandardIndicator[] = [
   // 血常规
   {
@@ -21,6 +22,7 @@ const STANDARD_INDICATORS: StandardIndicator[] = [
     unit: "×10⁹/L",
     refMin: 4.0,
     refMax: 10.0,
+    aliases: ["白细胞", "白血球"],
   },
   {
     category: "血常规",
@@ -29,9 +31,26 @@ const STANDARD_INDICATORS: StandardIndicator[] = [
     unit: "×10¹²/L",
     refMin: 3.8,
     refMax: 5.9,
+    aliases: ["红细胞", "红血球"],
   },
-  { category: "血常规", nameZh: "血红蛋白", abbr: "HGB", unit: "g/L", refMin: 115, refMax: 175 },
-  { category: "血常规", nameZh: "红细胞压积", abbr: "HCT", unit: "%", refMin: 35, refMax: 50 },
+  {
+    category: "血常规",
+    nameZh: "血红蛋白",
+    abbr: "HGB",
+    unit: "g/L",
+    refMin: 115,
+    refMax: 175,
+    aliases: ["血红蛋白测定", "Hb"],
+  },
+  {
+    category: "血常规",
+    nameZh: "红细胞压积",
+    abbr: "HCT",
+    unit: "%",
+    refMin: 35,
+    refMax: 50,
+    aliases: ["压积"],
+  },
   {
     category: "血常规",
     nameZh: "平均红细胞体积",
@@ -40,7 +59,15 @@ const STANDARD_INDICATORS: StandardIndicator[] = [
     refMin: 80,
     refMax: 100,
   },
-  { category: "血常规", nameZh: "平均血红蛋白量", abbr: "MCH", unit: "pg", refMin: 27, refMax: 34 },
+  {
+    category: "血常规",
+    nameZh: "平均血红蛋白量",
+    abbr: "MCH",
+    unit: "pg",
+    refMin: 27,
+    refMax: 34,
+    aliases: ["平均红细胞血红蛋白含量"],
+  },
   {
     category: "血常规",
     nameZh: "平均血红蛋白浓度",
@@ -48,6 +75,7 @@ const STANDARD_INDICATORS: StandardIndicator[] = [
     unit: "g/L",
     refMin: 320,
     refMax: 360,
+    aliases: ["平均红细胞血红蛋白浓度"],
   },
   {
     category: "血常规",
@@ -56,6 +84,7 @@ const STANDARD_INDICATORS: StandardIndicator[] = [
     unit: "×10⁹/L",
     refMin: 100,
     refMax: 300,
+    aliases: ["血小板"],
   },
   {
     category: "血常规",
@@ -64,6 +93,15 @@ const STANDARD_INDICATORS: StandardIndicator[] = [
     unit: "%",
     refMin: 40,
     refMax: 75,
+    aliases: ["中性粒细胞比率"],
+  },
+  {
+    category: "血常规",
+    nameZh: "中性粒细胞绝对值",
+    abbr: "NEUT#",
+    unit: "×10⁹/L",
+    refMin: 2,
+    refMax: 7,
   },
   {
     category: "血常规",
@@ -72,8 +110,34 @@ const STANDARD_INDICATORS: StandardIndicator[] = [
     unit: "%",
     refMin: 20,
     refMax: 50,
+    aliases: ["淋巴细胞比率"],
   },
-  { category: "血常规", nameZh: "单核细胞百分比", abbr: "MONO%", unit: "%", refMin: 3, refMax: 10 },
+  {
+    category: "血常规",
+    nameZh: "淋巴细胞绝对值",
+    abbr: "LYMPH#",
+    unit: "×10⁹/L",
+    refMin: 0.8,
+    refMax: 4,
+    aliases: ["淋巴细胞计数"],
+  },
+  {
+    category: "血常规",
+    nameZh: "单核细胞百分比",
+    abbr: "MONO%",
+    unit: "%",
+    refMin: 3,
+    refMax: 10,
+    aliases: ["单核细胞比率"],
+  },
+  {
+    category: "血常规",
+    nameZh: "单核细胞绝对值",
+    abbr: "MONO#",
+    unit: "×10⁹/L",
+    refMin: 0.12,
+    refMax: 0.8,
+  },
   {
     category: "血常规",
     nameZh: "嗜酸性粒细胞百分比",
@@ -81,6 +145,15 @@ const STANDARD_INDICATORS: StandardIndicator[] = [
     unit: "%",
     refMin: 0.5,
     refMax: 5,
+    aliases: ["嗜酸性粒细胞比率"],
+  },
+  {
+    category: "血常规",
+    nameZh: "嗜酸性粒细胞绝对值",
+    abbr: "EO#",
+    unit: "×10⁹/L",
+    refMin: 0.02,
+    refMax: 0.5,
   },
   {
     category: "血常规",
@@ -89,11 +162,73 @@ const STANDARD_INDICATORS: StandardIndicator[] = [
     unit: "%",
     refMin: 0,
     refMax: 1,
+    aliases: ["嗜碱性粒细胞比率"],
   },
+  {
+    category: "血常规",
+    nameZh: "嗜碱性粒细胞绝对值",
+    abbr: "BASO#",
+    unit: "×10⁹/L",
+    refMin: 0,
+    refMax: 0.1,
+  },
+  {
+    category: "血常规",
+    nameZh: "红细胞分布宽度",
+    abbr: "RDW",
+    unit: "%",
+    refMin: 11,
+    refMax: 15,
+    aliases: ["红细胞分布宽度变异系数", "RDW-CV"],
+  },
+  {
+    category: "血常规",
+    nameZh: "红细胞分布宽度SD",
+    abbr: "RDW-SD",
+    unit: "fL",
+    refMin: 37,
+    refMax: 51,
+  },
+  { category: "血常规", nameZh: "血小板分布宽度", abbr: "PDW", unit: "fL", refMin: 9, refMax: 17 },
+  {
+    category: "血常规",
+    nameZh: "血小板平均体积",
+    abbr: "MPV",
+    unit: "fL",
+    refMin: 7,
+    refMax: 11,
+    aliases: ["平均血小板体积"],
+  },
+  {
+    category: "血常规",
+    nameZh: "大型血小板比率",
+    abbr: "P-LCR",
+    unit: "%",
+    refMin: 13,
+    refMax: 43,
+    aliases: ["大血小板比率"],
+  },
+  { category: "血常规", nameZh: "血小板压积", abbr: "PCT", unit: "%", refMin: 0.1, refMax: 0.3 },
   // 血沉
-  { category: "血沉", nameZh: "红细胞沉降率", abbr: "ESR", unit: "mm/h", refMin: 0, refMax: 20 },
+  {
+    category: "血沉",
+    nameZh: "红细胞沉降率",
+    abbr: "ESR",
+    unit: "mm/h",
+    refMin: 0,
+    refMax: 20,
+    aliases: ["血沉"],
+  },
   // C反应蛋白
-  { category: "C反应蛋白", nameZh: "C反应蛋白", abbr: "CRP", unit: "mg/L", refMin: 0, refMax: 10 },
+  {
+    category: "C反应蛋白",
+    nameZh: "C反应蛋白",
+    abbr: "CRP",
+    unit: "mg/L",
+    refMin: 0,
+    refMax: 10,
+    aliases: ["C-反应蛋白"],
+  },
   {
     category: "C反应蛋白",
     nameZh: "超敏C反应蛋白",
@@ -110,6 +245,7 @@ const STANDARD_INDICATORS: StandardIndicator[] = [
     unit: "U/L",
     refMin: 7,
     refMax: 40,
+    aliases: ["谷丙转氨酶"],
   },
   {
     category: "肝功能",
@@ -118,6 +254,7 @@ const STANDARD_INDICATORS: StandardIndicator[] = [
     unit: "U/L",
     refMin: 13,
     refMax: 35,
+    aliases: ["谷草转氨酶", "天冬氨酸氨基转移酶"],
   },
   { category: "肝功能", nameZh: "碱性磷酸酶", abbr: "ALP", unit: "U/L", refMin: 40, refMax: 150 },
   {
@@ -127,17 +264,76 @@ const STANDARD_INDICATORS: StandardIndicator[] = [
     unit: "U/L",
     refMin: 10,
     refMax: 60,
+    aliases: ["γ-谷氨酰转肽酶", "谷氨酰转肽酶"],
   },
-  { category: "肝功能", nameZh: "总胆红素", abbr: "TBIL", unit: "μmol/L", refMin: 5, refMax: 21 },
+  {
+    category: "肝功能",
+    nameZh: "总胆红素",
+    abbr: "TBIL",
+    unit: "μmol/L",
+    refMin: 5,
+    refMax: 21,
+    aliases: ["总胆红素(重氮法)"],
+  },
   { category: "肝功能", nameZh: "直接胆红素", abbr: "DBIL", unit: "μmol/L", refMin: 0, refMax: 7 },
   { category: "肝功能", nameZh: "间接胆红素", abbr: "IBIL", unit: "μmol/L", refMin: 3, refMax: 14 },
-  { category: "肝功能", nameZh: "总蛋白", abbr: "TP", unit: "g/L", refMin: 60, refMax: 80 },
-  { category: "肝功能", nameZh: "白蛋白", abbr: "ALB", unit: "g/L", refMin: 35, refMax: 55 },
+  {
+    category: "肝功能",
+    nameZh: "总蛋白",
+    abbr: "TP",
+    unit: "g/L",
+    refMin: 60,
+    refMax: 80,
+    aliases: ["总蛋白定量"],
+  },
+  {
+    category: "肝功能",
+    nameZh: "白蛋白",
+    abbr: "ALB",
+    unit: "g/L",
+    refMin: 35,
+    refMax: 55,
+    aliases: ["白蛋白定量", "白蛋白定量(溴甲酚绿)"],
+  },
   { category: "肝功能", nameZh: "球蛋白", abbr: "GLB", unit: "g/L", refMin: 20, refMax: 35 },
-  { category: "肝功能", nameZh: "白球比", abbr: "A/G", unit: "", refMin: 1.2, refMax: 2.5 },
+  {
+    category: "肝功能",
+    nameZh: "白球比",
+    abbr: "A/G",
+    unit: "",
+    refMin: 1.2,
+    refMax: 2.5,
+    aliases: ["白球比值"],
+  },
+  {
+    category: "肝功能",
+    nameZh: "血清总胆汁酸",
+    abbr: "TBA",
+    unit: "μmol/L",
+    refMin: 0,
+    refMax: 10,
+    aliases: ["总胆汁酸"],
+  },
+  { category: "肝功能", nameZh: "前白蛋白", abbr: "PA", unit: "mg/L", refMin: 200, refMax: 400 },
   // 肾功能
-  { category: "肾功能", nameZh: "血尿素氮", abbr: "BUN", unit: "mmol/L", refMin: 2.8, refMax: 7.1 },
-  { category: "肾功能", nameZh: "肌酐", abbr: "CREA", unit: "μmol/L", refMin: 44, refMax: 97 },
+  {
+    category: "肾功能",
+    nameZh: "血尿素氮",
+    abbr: "BUN",
+    unit: "mmol/L",
+    refMin: 2.8,
+    refMax: 7.1,
+    aliases: ["尿素氮", "尿素氮(酶法)", "尿素"],
+  },
+  {
+    category: "肾功能",
+    nameZh: "肌酐",
+    abbr: "CREA",
+    unit: "μmol/L",
+    refMin: 44,
+    refMax: 97,
+    aliases: ["肌酐(酶法)", "肌酸酐", "Cr"],
+  },
   { category: "肾功能", nameZh: "尿酸", abbr: "UA", unit: "μmol/L", refMin: 155, refMax: 428 },
   {
     category: "肾功能",
@@ -146,52 +342,107 @@ const STANDARD_INDICATORS: StandardIndicator[] = [
     unit: "mL/min/1.73m²",
     refMin: 90,
   },
+  { category: "肾功能", nameZh: "β2微球蛋白", abbr: "β2-MG", unit: "mg/L", refMin: 1, refMax: 3 },
+  {
+    category: "肾功能",
+    nameZh: "胱抑素C",
+    abbr: "CysC",
+    unit: "mg/L",
+    refMin: 0.6,
+    refMax: 1.3,
+    aliases: ["胱抑素"],
+  },
+  { category: "肾功能", nameZh: "C1q测定", abbr: "C1q", unit: "mg/L", refMin: 159, refMax: 233 },
+  // 尿常规
+  {
+    category: "尿常规",
+    nameZh: "比重",
+    abbr: "SG",
+    unit: "",
+    refMin: 1.004,
+    refMax: 1.03,
+    aliases: ["尿比重"],
+  },
+  {
+    category: "尿常规",
+    nameZh: "pH值",
+    abbr: "pH",
+    unit: "",
+    refMin: 4.5,
+    refMax: 8,
+    aliases: ["酸碱度"],
+  },
+  {
+    category: "尿常规",
+    nameZh: "白细胞",
+    abbr: "LEU",
+    unit: "",
+    refValue: "negative",
+    aliases: ["尿白细胞"],
+  },
+  {
+    category: "尿常规",
+    nameZh: "隐血",
+    abbr: "ERY",
+    unit: "",
+    refValue: "negative",
+    aliases: ["尿隐血", "尿潜血"],
+  },
+  { category: "尿常规", nameZh: "亚硝酸盐", abbr: "NIT", unit: "", refValue: "negative" },
+  {
+    category: "尿常规",
+    nameZh: "酮体",
+    abbr: "KET",
+    unit: "",
+    refValue: "negative",
+    aliases: ["尿酮体"],
+  },
+  {
+    category: "尿常规",
+    nameZh: "胆红素",
+    abbr: "BIL",
+    unit: "",
+    refValue: "negative",
+    aliases: ["尿胆红素"],
+  },
+  { category: "尿常规", nameZh: "尿胆原", abbr: "UBG", unit: "", refValue: "negative" },
+  {
+    category: "尿常规",
+    nameZh: "蛋白质",
+    abbr: "PRO",
+    unit: "",
+    refValue: "negative",
+    aliases: ["尿蛋白"],
+  },
+  {
+    category: "尿常规",
+    nameZh: "葡萄糖",
+    abbr: "GLU",
+    unit: "",
+    refValue: "negative",
+    aliases: ["尿糖", "尿葡萄糖"],
+  },
 ];
-
-// 别名映射（AI 识别名 -> 标准名）
-const ALIASES: Record<string, string> = {
-  // 白细胞
-  白细胞: "白细胞计数",
-  WBC: "白细胞计数",
-  // 红细胞
-  红细胞: "红细胞计数",
-  RBC: "红细胞计数",
-  // 血红蛋白
-  Hb: "血红蛋白",
-  HB: "血红蛋白",
-  血红蛋白浓度: "血红蛋白",
-  // 红细胞压积
-  HCT: "红细胞压积",
-  压积: "红细胞压积",
-  // 血小板
-  血小板: "血小板计数",
-  PLT: "血小板计数",
-  // 肝功能
-  谷丙转氨酶: "丙氨酸氨基转移酶",
-  谷草转氨酶: "天门冬氨酸氨基转移酶",
-  转氨酶: "丙氨酸氨基转移酶",
-  // 肾功能
-  尿素氮: "血尿素氮",
-  肌酸酐: "肌酐",
-  Cr: "肌酐",
-};
 
 /**
  * 查找标准指标
  */
 export function findStandardIndicator(name: string): StandardIndicator | undefined {
-  // 先通过别名查找
-  const standardName = ALIASES[name] || name;
+  // 精确匹配：名称或缩写
+  let found = STANDARD_INDICATORS.find((ind) => ind.nameZh === name || ind.abbr === name);
+  if (found) return found;
 
-  // 精确匹配
-  let found = STANDARD_INDICATORS.find(
-    (ind) => ind.nameZh === standardName || ind.abbr === standardName,
-  );
+  // 别名匹配
+  found = STANDARD_INDICATORS.find((ind) => ind.aliases?.some((alias) => alias === name));
   if (found) return found;
 
   // 模糊匹配：包含关系
-  found = STANDARD_INDICATORS.find(
-    (ind) => standardName.includes(ind.nameZh) || ind.nameZh.includes(standardName),
+  found = STANDARD_INDICATORS.find((ind) => name.includes(ind.nameZh) || ind.nameZh.includes(name));
+  if (found) return found;
+
+  // 别名模糊匹配
+  found = STANDARD_INDICATORS.find((ind) =>
+    ind.aliases?.some((alias) => name.includes(alias) || alias.includes(name)),
   );
   if (found) return found;
 
