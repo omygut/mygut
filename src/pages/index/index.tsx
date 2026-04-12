@@ -1,20 +1,23 @@
-import { View, Text, Picker } from "@tarojs/components";
+import { View, Text, Picker, Image } from "@tarojs/components";
 import Taro, { useDidShow } from "@tarojs/taro";
 import { useState, useCallback } from "react";
 import { getSymptomRecordsByDate } from "../../services/symptom";
 import { getMealRecordsByDate } from "../../services/meal";
 import { getStoolRecordsByDate } from "../../services/stool";
 import { getMedicationRecordsByDate } from "../../services/medication";
+import { getCurrentUser, getDefaultNickname } from "../../services/user";
 import { formatDate, getPrevDate, getNextDate, getWeekday } from "../../utils/date";
 import { SYMPTOM_TYPES, SEVERITY_OPTIONS, FEELING_OPTIONS } from "../../constants/symptom";
 import { AMOUNT_OPTIONS } from "../../constants/meal";
 import { BRISTOL_TYPES, STOOL_AMOUNTS } from "../../constants/stool";
+import ProfilePopup from "../../components/ProfilePopup";
 import type {
   SymptomRecord,
   MealRecord,
   StoolRecord,
   MedicationRecord,
   Symptom,
+  User,
 } from "../../types";
 import "./index.css";
 
@@ -63,6 +66,8 @@ export default function Index() {
   const [mealRecords, setMealRecords] = useState<MealRecord[]>([]);
   const [stoolRecords, setStoolRecords] = useState<StoolRecord[]>([]);
   const [medicationRecords, setMedicationRecords] = useState<MedicationRecord[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
 
   const loadData = useCallback(async (date: string) => {
     setLoading(true);
@@ -85,8 +90,18 @@ export default function Index() {
     }
   }, []);
 
+  const loadUser = useCallback(async () => {
+    try {
+      const userData = await getCurrentUser();
+      setUser(userData);
+    } catch (error) {
+      console.error("加载用户信息失败:", error);
+    }
+  }, []);
+
   useDidShow(() => {
     loadData(currentDate);
+    loadUser();
   });
 
   const handlePrevDate = () => {
@@ -115,22 +130,54 @@ export default function Index() {
     Taro.navigateTo({ url: path });
   };
 
+  const handleAvatarClick = () => {
+    setShowProfilePopup(true);
+  };
+
+  const handleProfileClose = () => {
+    setShowProfilePopup(false);
+  };
+
+  const handleProfileSave = (data: { nickname: string; avatar?: string }) => {
+    setUser((prev) => (prev ? { ...prev, ...data } : prev));
+    setShowProfilePopup(false);
+  };
+
+  const displayNickname = user?.nickname || (user?._id ? getDefaultNickname(user._id) : "");
+
   return (
     <View className="overview-page">
-      {/* 日期选择器 */}
-      <View className="date-header">
-        <Text className="date-arrow" onClick={handlePrevDate}>
-          ◀
-        </Text>
-        <Picker mode="date" value={currentDate} end={today} onChange={handleDateChange}>
-          <Text className="date-text">
-            {currentDate} {getWeekday(currentDate)}
+      {/* 顶部栏：头像 + 日期选择器 */}
+      <View className="top-header">
+        <View className="header-avatar" onClick={handleAvatarClick}>
+          {user?.avatar ? (
+            <Image className="avatar-img" src={user.avatar} mode="aspectFill" />
+          ) : (
+            <View className="avatar-default" />
+          )}
+        </View>
+        <View className="date-selector">
+          <Text className="date-arrow" onClick={handlePrevDate}>
+            ◀
           </Text>
-        </Picker>
-        <Text className={`date-arrow ${isToday ? "disabled" : ""}`} onClick={handleNextDate}>
-          ▶
-        </Text>
+          <Picker mode="date" value={currentDate} end={today} onChange={handleDateChange}>
+            <Text className="date-text">
+              {currentDate} {getWeekday(currentDate)}
+            </Text>
+          </Picker>
+          <Text className={`date-arrow ${isToday ? "disabled" : ""}`} onClick={handleNextDate}>
+            ▶
+          </Text>
+        </View>
       </View>
+
+      <ProfilePopup
+        visible={showProfilePopup}
+        nickname={displayNickname}
+        avatar={user?.avatar}
+        onClose={handleProfileClose}
+        onSave={handleProfileSave}
+      />
 
       {loading ? (
         <View className="loading">加载中...</View>
