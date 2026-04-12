@@ -2,9 +2,11 @@ import { View, Text, Image, Picker } from "@tarojs/components";
 import Taro, { useRouter } from "@tarojs/taro";
 import { useState, useEffect, useRef } from "react";
 import { labTestService } from "../../../services/labtest";
+import { recognizeLabTestImage } from "../../../services/ai";
 import { chooseImage, uploadImage, deleteCloudFile } from "../../../utils/upload";
 import { formatDate, formatTime } from "../../../utils/date";
 import { LABTEST_TYPES } from "../../../constants/labtest";
+import type { LabTestIndicator } from "../../../types";
 import "./index.css";
 
 export default function LabTestAdd() {
@@ -145,7 +147,17 @@ export default function LabTestAdd() {
 
     setSubmitting(true);
     try {
-      // 上传本地图片
+      // 1. AI 识别本地图片中的指标
+      let newIndicators: LabTestIndicator[] = [];
+      if (localImages.length > 0) {
+        Taro.showLoading({ title: "识别中..." });
+        const recognitionPromises = localImages.map((path) => recognizeLabTestImage(path));
+        const recognitionResults = await Promise.all(recognitionPromises);
+        newIndicators = recognitionResults.flat();
+        Taro.hideLoading();
+      }
+
+      // 2. 上传本地图片到云存储
       let newFileIds: string[] = [];
       if (localImages.length > 0) {
         Taro.showLoading({ title: "上传中..." });
@@ -161,7 +173,7 @@ export default function LabTestAdd() {
         time,
         type,
         imageFileIds,
-        indicators: [],
+        indicators: newIndicators,
       };
 
       if (isEdit && editId) {
@@ -269,10 +281,7 @@ export default function LabTestAdd() {
 
       {/* 提交按钮 */}
       <View className="submit-section">
-        <View
-          className={`submit-btn ${submitting ? "disabled" : ""}`}
-          onClick={handleSubmit}
-        >
+        <View className={`submit-btn ${submitting ? "disabled" : ""}`} onClick={handleSubmit}>
           {submitting ? "保存中..." : isEdit ? "更新记录" : "保存记录"}
         </View>
         {isEdit && (
