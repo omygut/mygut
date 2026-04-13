@@ -132,6 +132,15 @@ export default function LabTestAdd() {
       return;
     }
 
+    const confirmRes = await Taro.showModal({
+      title: "隐私确认",
+      content:
+        "图片将发送至第三方 AI 服务进行识别。请确认已抹除图片中的姓名、住址、身份证号、手机号、就诊卡号等个人隐私信息。",
+      confirmText: "确认识别",
+    });
+
+    if (!confirmRes.confirm) return;
+
     setRecognizing(true);
     try {
       Taro.showLoading({ title: "识别中..." });
