@@ -73,7 +73,7 @@ export default function ExamIndex() {
                       <Text className="exam-type-label">{examTypeInfo.label}</Text>
                     </View>
                     <Text className="record-date">
-                      检查: {formatDisplayDate(record.examDate)}
+                      {formatDisplayDate(record.date)}
                     </Text>
                   </View>
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { examService } from "../../../services/exam";
 import { recognizeExamReport } from "../../../services/ai";
 import { chooseImage, uploadImage, deleteCloudFile } from "../../../utils/upload";
-import { formatDate, formatTime } from "../../../utils/date";
+import { formatDate } from "../../../utils/date";
 import { EXAM_TYPES } from "../../../constants/exam";
 import "./index.css";
 
@@ -14,10 +14,9 @@ export default function ExamAdd() {
   const isEdit = !!editId;
 
   const [date, setDate] = useState(formatDate());
-  const [time, setTime] = useState(formatTime());
-  const [examDate, setExamDate] = useState(formatDate());
+  const [time, setTime] = useState("10:00");
   const [examType, setExamType] = useState(EXAM_TYPES[0].value);
-  const [content, setConclusion] = useState("");
+  const [content, setContent] = useState("");
   const [note, setNote] = useState("");
   const [localImages, setLocalImages] = useState<string[]>([]);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -48,10 +47,9 @@ export default function ExamAdd() {
       const record = await examService.getById(id);
       if (record) {
         setDate(record.date);
-        setTime(record.time || formatTime());
-        setExamDate(record.examDate);
+        setTime(record.time || "10:00");
         setExamType(record.examType);
-        setConclusion(record.content || "");
+        setContent(record.content || "");
         setNote(record.note || "");
         setUploadedImages(record.imageFileIds || []);
       }
@@ -127,10 +125,10 @@ export default function ExamAdd() {
       if (localImages.length > 0) {
         const result = await recognizeExamReport(localImages[0]);
         if (result.date) {
-          setExamDate(result.date);
+          setDate(result.date);
         }
         if (result.content) {
-          setConclusion(result.content);
+          setContent(result.content);
         }
       }
       Taro.hideLoading();
@@ -192,7 +190,6 @@ export default function ExamAdd() {
       const data = {
         date,
         time,
-        examDate,
         examType,
         imageFileIds,
         content: content || undefined,
@@ -240,6 +237,14 @@ export default function ExamAdd() {
 
   return (
     <View className="add-page">
+      {/* 检查日期 */}
+      <View className="section">
+        <Text className="section-title">检查日期</Text>
+        <Picker mode="date" value={date} onChange={(e) => setDate(e.detail.value)}>
+          <View className="picker-value">{date}</View>
+        </Picker>
+      </View>
+
       {/* 检查类型 */}
       <View className="section">
         <Text className="section-title">检查类型</Text>
@@ -254,27 +259,6 @@ export default function ExamAdd() {
             {selectedExamType?.emoji} {selectedExamType?.label}
           </View>
         </Picker>
-      </View>
-
-      {/* 检查日期 */}
-      <View className="section">
-        <Text className="section-title">检查日期</Text>
-        <Picker mode="date" value={examDate} onChange={(e) => setExamDate(e.detail.value)}>
-          <View className="picker-value">{examDate}</View>
-        </Picker>
-      </View>
-
-      {/* 记录时间 */}
-      <View className="section">
-        <Text className="section-title">记录时间</Text>
-        <View className="time-row">
-          <Picker mode="date" value={date} onChange={(e) => setDate(e.detail.value)}>
-            <View className="picker-value">{date}</View>
-          </Picker>
-          <Picker mode="time" value={time} onChange={(e) => setTime(e.detail.value)}>
-            <View className="picker-value">{time}</View>
-          </Picker>
-        </View>
       </View>
 
       {/* 图片 */}
@@ -331,7 +315,7 @@ export default function ExamAdd() {
           <Textarea
             className="content-input"
             value={content}
-            onInput={(e) => setConclusion(e.detail.value)}
+            onInput={(e) => setContent(e.detail.value)}
             placeholder='点击"AI 识别"或手动输入报告内容'
             maxlength={2000}
           />
