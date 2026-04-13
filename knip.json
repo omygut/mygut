@@ -7,7 +7,7 @@
     "src/pages/**/index.config.ts",
     "config/index.ts"
   ],
-  "project": ["src/**/*.{ts,tsx}", "config/**/*.ts"],
+  "project": ["src/**/*.{ts,tsx}", "config/**/*.ts", "scripts/**/*.ts"],
   "ignoreDependencies": [
     "@babel/runtime",
     "@tarojs/plugin-*",
@@ -16,9 +16,10 @@
     "@tarojs/vite-runner",
     "@vitejs/plugin-react",
     "miniprogram-ci",
+    "tsx",
     "vite"
   ],
   "ignoreExportsUsedInFile": true,
-  "ignore": ["src/types/index.ts"],
-  "ignoreBinaries": ["miniprogram-ci"]
+  "ignore": ["src/types/index.ts", "scripts/test-ai-models.ts"],
+  "ignoreBinaries": ["miniprogram-ci", "tsx"]
 }
