@@ -8,5 +8,3 @@ export const EXAM_TYPES = [
   { value: "xray", label: "X光", emoji: "☢️" },
   { value: "other", label: "其他", emoji: "📋" },
 ] as const;
-
-export type ExamType = (typeof EXAM_TYPES)[number]["value"];
