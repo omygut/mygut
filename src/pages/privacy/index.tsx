@@ -7,14 +7,14 @@ export default function Privacy() {
       <View className="section">
         <Text className="section-title">数据收集</Text>
         <Text className="section-content">
-          本应用收集您主动填写的健康记录数据，包括排便记录、症状记录、饮食记录和用药记录。这些数据仅用于您个人的健康管理。
+          本应用收集您主动填写的健康记录数据，仅用于您个人的健康管理。
         </Text>
       </View>
 
       <View className="section">
         <Text className="section-title">数据存储</Text>
         <Text className="section-content">
-          您的数据存储在微信云开发平台，与您的微信账号关联。数据采用加密传输，仅您本人可以访问。
+          您的数据存储在微信云开发平台，采用加密传输，仅您本人可以访问。开发者无法查看您的微信账号、手机号等身份信息，也无法将您的数据与您的真实身份关联。
         </Text>
       </View>
 
@@ -28,7 +28,15 @@ export default function Privacy() {
       <View className="section">
         <Text className="section-title">数据共享</Text>
         <Text className="section-content">
-          我们不会与任何第三方共享您的健康数据。您的数据完全属于您个人。
+          在未经您明确允许的情况下，我们不会与任何第三方共享您的健康数据。您的数据完全属于您个人。
+        </Text>
+      </View>
+
+      <View className="section">
+        <Text className="section-title">图片识别</Text>
+        <Text className="section-content">
+          为了识别您上传的检查报告和化验报告，我们会将图片发送至第三方 AI
+          服务进行处理。请务必在上传前抹除图片中的姓名、住址、身份证号、手机号、就诊卡号等个人隐私信息。
         </Text>
       </View>
 
@@ -42,7 +50,14 @@ export default function Privacy() {
       <View className="section">
         <Text className="section-title">数据删除</Text>
         <Text className="section-content">
-          您可以在设置页面一键删除全部数据。一旦执行删除操作，我们将从服务器彻底清除您的所有健康记录和个人资料，包括排便、症状、饮食、用药记录及头像等。此操作不可撤销，程序后台也无法恢复，请务必谨慎操作。
+          您可以在设置页面一键删除全部数据。一旦执行删除操作，我们将从服务器彻底清除您的所有健康记录和个人资料。此操作不可撤销，程序后台也无法恢复，请务必谨慎操作。
+        </Text>
+      </View>
+
+      <View className="section">
+        <Text className="section-title">开源代码</Text>
+        <Text className="section-content">
+          本项目完全开源，您可以在 GitHub 查看源代码：github.com/fankaidev/mygut
         </Text>
       </View>
 
