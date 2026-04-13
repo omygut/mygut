@@ -3,19 +3,19 @@ import Taro, { useRouter } from "@tarojs/taro";
 import { useState, useRef, useEffect } from "react";
 import "./index.css";
 
-interface Rect {
+interface Point {
   x: number;
   y: number;
-  width: number;
-  height: number;
 }
 
 const TIPS: Record<string, string> = {
   labtest:
-    '您上传的图片将用于 AI 自动识别化验指标。请用手指框选并遮盖姓名、身份证号、住址、电话等敏感信息，确认图片中不含敏感个人信息后再点击"确认"。',
-  exam:
-    '您上传的图片将用于 AI 自动识别检查结论。请用手指框选并遮盖姓名、身份证号、住址、电话等敏感信息，确认图片中不含敏感个人信息后再点击"确认"。',
+    '您上传的图片将用于 AI 自动识别化验指标。请用手指涂抹遮盖姓名、身份证号、住址、电话等敏感信息，确认图片中不含敏感个人信息后再点击"确认"。',
+  exam: '您上传的图片将用于 AI 自动识别检查结论。请用手指涂抹遮盖姓名、身份证号、住址、电话等敏感信息，确认图片中不含敏感个人信息后再点击"确认"。',
 };
+
+// 马赛克块大小
+const BLOCK_SIZE = 6;
 
 export default function MosaicEditor() {
   const router = useRouter();
@@ -25,11 +25,12 @@ export default function MosaicEditor() {
 
   const [imageInfo, setImageInfo] = useState<{ width: number; height: number } | null>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
-  const [selecting, setSelecting] = useState(false);
-  const [startPoint, setStartPoint] = useState({ x: 0, y: 0 });
-  const [currentRect, setCurrentRect] = useState<Rect | null>(null);
-  const [mosaicRects, setMosaicRects] = useState<Rect[]>([]);
+  const [drawing, setDrawing] = useState(false);
   const [processing, setProcessing] = useState(false);
+  // 记录所有涂抹过的点，用于撤销
+  const [strokeHistory, setStrokeHistory] = useState<Point[][]>([]);
+  const currentStrokeRef = useRef<Point[]>([]);
+  const lastPointRef = useRef<Point | null>(null);
 
   const canvasRef = useRef<string>("mosaicCanvas");
 
@@ -81,52 +82,109 @@ export default function MosaicEditor() {
     ctx.draw();
   };
 
+  const vibrateLight = () => {
+    try {
+      Taro.vibrateShort({ type: "light" });
+    } catch {
+      // 忽略振动失败
+    }
+  };
+
+  // 在某个点绘制马赛克（画 2x2 个块）
+  const drawMosaicAt = (ctx: Taro.CanvasContext, point: Point) => {
+    const centerBlockX = Math.floor(point.x / BLOCK_SIZE) * BLOCK_SIZE;
+    const centerBlockY = Math.floor(point.y / BLOCK_SIZE) * BLOCK_SIZE;
+
+    // 画 2x2 的块，以触摸点为中心偏左上
+    for (let dx = 0; dx < 2; dx++) {
+      for (let dy = 0; dy < 2; dy++) {
+        const gray = Math.floor(Math.random() * 100) + 100;
+        ctx.setFillStyle(`rgb(${gray}, ${gray}, ${gray})`);
+        ctx.fillRect(
+          centerBlockX + dx * BLOCK_SIZE,
+          centerBlockY + dy * BLOCK_SIZE,
+          BLOCK_SIZE,
+          BLOCK_SIZE,
+        );
+      }
+    }
+  };
+
+  // 在两点之间插值绘制马赛克（让线条连续）
+  const drawMosaicLine = (ctx: Taro.CanvasContext, from: Point, to: Point) => {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const steps = Math.max(1, Math.floor(distance / (BLOCK_SIZE / 2)));
+
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const point = {
+        x: from.x + dx * t,
+        y: from.y + dy * t,
+      };
+      drawMosaicAt(ctx, point);
+    }
+  };
+
   const handleTouchStart = (e: { touches: { x: number; y: number }[] }) => {
     const touch = e.touches[0];
-    setSelecting(true);
-    setStartPoint({ x: touch.x, y: touch.y });
-    setCurrentRect(null);
+    const point = { x: touch.x, y: touch.y };
+
+    vibrateLight();
+    setDrawing(true);
+    currentStrokeRef.current = [point];
+    lastPointRef.current = point;
+
+    // 增量绘制当前点
+    const ctx = Taro.createCanvasContext(canvasRef.current);
+    drawMosaicAt(ctx, point);
+    ctx.draw(true); // reserve = true，保留之前的内容
   };
 
   const handleTouchMove = (e: { touches: { x: number; y: number }[] }) => {
-    if (!selecting) return;
+    if (!drawing || !lastPointRef.current) return;
 
     const touch = e.touches[0];
-    const rect: Rect = {
-      x: Math.min(startPoint.x, touch.x),
-      y: Math.min(startPoint.y, touch.y),
-      width: Math.abs(touch.x - startPoint.x),
-      height: Math.abs(touch.y - startPoint.y),
-    };
-    setCurrentRect(rect);
+    const point = { x: touch.x, y: touch.y };
+    currentStrokeRef.current.push(point);
+
+    // 只增量绘制从上一个点到当前点
+    const ctx = Taro.createCanvasContext(canvasRef.current);
+    drawMosaicLine(ctx, lastPointRef.current, point);
+    ctx.draw(true); // reserve = true，保留之前的内容
+
+    lastPointRef.current = point;
   };
 
   const handleTouchEnd = () => {
-    setSelecting(false);
-    if (currentRect && currentRect.width > 10 && currentRect.height > 10) {
-      setMosaicRects([...mosaicRects, currentRect]);
-      applyMosaic(currentRect);
+    if (!drawing) return;
+
+    setDrawing(false);
+
+    // 保存当前笔画到历史
+    if (currentStrokeRef.current.length > 0) {
+      const newHistory = [...strokeHistory, [...currentStrokeRef.current]];
+      setStrokeHistory(newHistory);
+
+      // 手指抬起后完整重绘，确保状态一致
+      redrawAllStrokes(newHistory);
     }
-    setCurrentRect(null);
+
+    currentStrokeRef.current = [];
+    lastPointRef.current = null;
   };
 
-  const applyMosaic = (rect: Rect) => {
+  const redrawAllStrokes = (strokes: Point[][]) => {
     const ctx = Taro.createCanvasContext(canvasRef.current);
-
-    // 重绘图片
     ctx.drawImage(imageUrl, 0, 0, canvasSize.width, canvasSize.height);
 
-    // 对所有已有区域和新区域应用马赛克
-    const allRects = [...mosaicRects, rect];
-    allRects.forEach((r) => {
-      // 用灰色方块模拟马赛克效果
-      const blockSize = 10;
-      for (let x = r.x; x < r.x + r.width; x += blockSize) {
-        for (let y = r.y; y < r.y + r.height; y += blockSize) {
-          // 随机灰度色
-          const gray = Math.floor(Math.random() * 100) + 100;
-          ctx.setFillStyle(`rgb(${gray}, ${gray}, ${gray})`);
-          ctx.fillRect(x, y, blockSize, blockSize);
+    strokes.forEach((stroke) => {
+      for (let i = 0; i < stroke.length; i++) {
+        if (i === 0) {
+          drawMosaicAt(ctx, stroke[i]);
+        } else {
+          drawMosaicLine(ctx, stroke[i - 1], stroke[i]);
         }
       }
     });
@@ -135,26 +193,22 @@ export default function MosaicEditor() {
   };
 
   const handleUndo = () => {
-    if (mosaicRects.length === 0) return;
+    if (strokeHistory.length === 0) return;
+    vibrateLight();
 
-    const newRects = mosaicRects.slice(0, -1);
-    setMosaicRects(newRects);
+    const newHistory = strokeHistory.slice(0, -1);
+    setStrokeHistory(newHistory);
+    redrawAllStrokes(newHistory);
+  };
 
-    // 重绘
+  const handleClearAll = () => {
+    if (strokeHistory.length === 0) return;
+    vibrateLight();
+
+    setStrokeHistory([]);
+    // 重绘原图
     const ctx = Taro.createCanvasContext(canvasRef.current);
     ctx.drawImage(imageUrl, 0, 0, canvasSize.width, canvasSize.height);
-
-    newRects.forEach((r) => {
-      const blockSize = 10;
-      for (let x = r.x; x < r.x + r.width; x += blockSize) {
-        for (let y = r.y; y < r.y + r.height; y += blockSize) {
-          const gray = Math.floor(Math.random() * 100) + 100;
-          ctx.setFillStyle(`rgb(${gray}, ${gray}, ${gray})`);
-          ctx.fillRect(x, y, blockSize, blockSize);
-        }
-      }
-    });
-
     ctx.draw();
   };
 
@@ -229,28 +283,30 @@ export default function MosaicEditor() {
             <Canvas
               canvasId={canvasRef.current}
               style={{ width: `${canvasSize.width}px`, height: `${canvasSize.height}px` }}
+              disableScroll
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             />
           )}
-          {currentRect && (
-            <View
-              className="selection-rect"
-              style={{
-                left: `${currentRect.x}px`,
-                top: `${currentRect.y}px`,
-                width: `${currentRect.width}px`,
-                height: `${currentRect.height}px`,
-              }}
-            />
+          {/* 涂抹提示 - 无涂抹时显示 */}
+          {strokeHistory.length === 0 && !drawing && (
+            <View className="select-hint">
+              <Text className="select-hint-text">用手指涂抹敏感信息</Text>
+            </View>
           )}
         </View>
       </View>
 
       <View className="action-bar">
         <View
-          className={`action-btn undo-btn ${mosaicRects.length === 0 ? "disabled" : ""}`}
+          className={`action-btn secondary-btn ${strokeHistory.length === 0 ? "disabled" : ""}`}
+          onClick={handleClearAll}
+        >
+          清除
+        </View>
+        <View
+          className={`action-btn secondary-btn ${strokeHistory.length === 0 ? "disabled" : ""}`}
           onClick={handleUndo}
         >
           撤销
