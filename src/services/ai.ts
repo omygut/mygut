@@ -2,7 +2,7 @@ import type { LabTestIndicator } from "../types";
 
 const MODEL = "Qwen/Qwen3-VL-32B-Instruct";
 
-const SYSTEM_PROMPT = `识别化验单图片中的指标，返回CSV格式（无表头）。
+const LAB_TEST_PROMPT = `识别化验单图片中的指标，返回CSV格式（无表头）。
 
 列：名称,数值,单位
 
@@ -11,6 +11,17 @@ const SYSTEM_PROMPT = `识别化验单图片中的指标，返回CSV格式（无
 红细胞,3.2,10^12/L
 
 只返回CSV，无其他文字。`;
+
+const EXAM_PROMPT = `识别这张检查报告（B超/CT/MRI/肠镜/胃镜等）的检查日期和完整内容。
+
+返回JSON格式：
+{"date": "YYYY-MM-DD", "content": "报告完整内容"}
+
+要求：
+1. date: 提取报告中的检查日期，格式为YYYY-MM-DD，如找不到则返回空字符串
+2. content: 完整提取报告中的所有检查内容，包括检查所见、检查结果、诊断结论等，不要遗漏任何信息，保持原文格式
+
+只返回JSON，无其他文字。`;
 
 type MessageContent =
   | string
@@ -65,7 +76,7 @@ export async function recognizeLabTestImage(imageFilePath: string): Promise<LabT
         messages: [
           {
             role: "system",
-            content: SYSTEM_PROMPT,
+            content: LAB_TEST_PROMPT,
           },
           {
             role: "user",
@@ -123,6 +134,83 @@ export async function recognizeLabTestImage(imageFilePath: string): Promise<LabT
     }
 
     return indicators;
+  } catch (error) {
+    console.error("AI 识别失败:", error);
+    throw error;
+  }
+}
+
+export interface ExamRecognitionResult {
+  date: string; // YYYY-MM-DD or empty
+  content: string; // 报告完整内容
+}
+
+export async function recognizeExamReport(
+  imageFilePath: string
+): Promise<ExamRecognitionResult> {
+  try {
+    const base64 = await imageToBase64(imageFilePath);
+    const imageUrl = `data:image/jpeg;base64,${base64}`;
+
+    const res = await wx.cloud.extend.AI.createModel("siliconflow-custom").streamText({
+      data: {
+        model: MODEL,
+        messages: [
+          {
+            role: "system",
+            content: EXAM_PROMPT,
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: {
+                  url: imageUrl,
+                },
+              },
+              {
+                type: "text",
+                text: "请识别这张检查报告的检查日期和诊断结论。",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    let fullResponse = "";
+    for await (const event of res.eventStream) {
+      if (event.data === "[DONE]") {
+        break;
+      }
+      try {
+        const data = JSON.parse(event.data);
+        const text = data?.choices?.[0]?.delta?.content;
+        if (text) {
+          fullResponse += text;
+        }
+      } catch {
+        // 忽略解析错误
+      }
+    }
+
+    console.log("AI 响应:", fullResponse);
+
+    // 解析 JSON 响应
+    try {
+      const result = JSON.parse(fullResponse.trim());
+      return {
+        date: result.date || "",
+        content: result.content || "",
+      };
+    } catch {
+      // 如果解析失败，将整个响应作为内容
+      return {
+        date: "",
+        content: fullResponse.trim(),
+      };
+    }
   } catch (error) {
     console.error("AI 识别失败:", error);
     throw error;

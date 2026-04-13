@@ -1,36 +1,27 @@
-import { View, Text, Image, Picker } from "@tarojs/components";
+import { View, Text, Image, Picker, Input, Textarea } from "@tarojs/components";
 import Taro, { useRouter } from "@tarojs/taro";
 import { useState, useEffect, useRef } from "react";
-import { labTestService } from "../../../services/labtest";
-import { recognizeLabTestImage } from "../../../services/ai";
-import { normalizeIndicators, type SpecimenType } from "../../../services/labtest-standards";
+import { examService } from "../../../services/exam";
+import { recognizeExamReport } from "../../../services/ai";
 import { chooseImage, uploadImage, deleteCloudFile } from "../../../utils/upload";
-import { formatDate, formatTime } from "../../../utils/date";
-import type { LabTestIndicator } from "../../../types";
+import { formatDate } from "../../../utils/date";
+import { EXAM_TYPES } from "../../../constants/exam";
 import "./index.css";
 
-const SPECIMEN_OPTIONS: { value: SpecimenType; label: string }[] = [
-  { value: "血液", label: "血液" },
-  { value: "尿液", label: "尿液" },
-  { value: "粪便", label: "粪便" },
-  { value: "其他", label: "其他" },
-];
-
-export default function LabTestAdd() {
+export default function ExamAdd() {
   const router = useRouter();
   const editId = router.params.id;
   const isEdit = !!editId;
 
   const [date, setDate] = useState(formatDate());
-  const [time, setTime] = useState(formatTime());
-  const [specimen, setSpecimen] = useState<SpecimenType>("血液");
-  // 本地待上传的图片路径
+  const [time, setTime] = useState("10:00");
+  const [examType, setExamType] = useState(EXAM_TYPES[0].value);
+  const [content, setContent] = useState("");
+  const [note, setNote] = useState("");
   const [localImages, setLocalImages] = useState<string[]>([]);
-  // 已上传到云存储的 fileId（编辑模式）
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [recognizing, setRecognizing] = useState(false);
-  const [indicators, setIndicators] = useState<LabTestIndicator[]>([]);
   const [loading, setLoading] = useState(isEdit);
 
   const localImagesRef = useRef(localImages);
@@ -41,9 +32,7 @@ export default function LabTestAdd() {
       loadRecord(editId);
     }
 
-    // 监听打码完成事件
     const handleMosaicComplete = (data: { resultPath: string }) => {
-      // 新增打码后的图片到本地列表
       setLocalImages([...localImagesRef.current, data.resultPath]);
     };
     Taro.eventCenter.on("mosaicComplete", handleMosaicComplete);
@@ -55,15 +44,14 @@ export default function LabTestAdd() {
 
   const loadRecord = async (id: string) => {
     try {
-      const record = await labTestService.getById(id);
+      const record = await examService.getById(id);
       if (record) {
         setDate(record.date);
-        setTime(record.time || formatTime());
-        const recordSpecimen = record.specimen || "血液";
-        setSpecimen(recordSpecimen);
+        setTime(record.time || "10:00");
+        setExamType(record.examType);
+        setContent(record.content || "");
+        setNote(record.note || "");
         setUploadedImages(record.imageFileIds || []);
-        // 加载时实时归一化
-        setIndicators(normalizeIndicators(record.indicators || [], recordSpecimen));
       }
     } catch (error) {
       console.error("加载记录失败:", error);
@@ -78,13 +66,11 @@ export default function LabTestAdd() {
     if (totalImages >= 6) return;
 
     try {
-      // 每次只选择一张图片，立即进入打码流程
       const tempPaths = await chooseImage(1);
       if (tempPaths.length === 0) return;
 
-      // 跳转到打码页面
       Taro.navigateTo({
-        url: `/pages/labtest/mosaic/index?url=${encodeURIComponent(tempPaths[0])}`,
+        url: `/pages/labtest/mosaic/index?url=${encodeURIComponent(tempPaths[0])}&source=exam`,
       });
     } catch (error) {
       console.error("选择图片失败:", error);
@@ -135,20 +121,18 @@ export default function LabTestAdd() {
     setRecognizing(true);
     try {
       Taro.showLoading({ title: "识别中..." });
-      // 识别本地图片
-      const recognitionPromises = localImages.map((path) => recognizeLabTestImage(path));
-      const recognitionResults = await Promise.all(recognitionPromises);
-      const rawIndicators = recognitionResults.flat();
-      // 归一化指标（按标本类型过滤）
-      const newIndicators = normalizeIndicators(rawIndicators, specimen);
-      setIndicators(newIndicators);
-      Taro.hideLoading();
-
-      if (newIndicators.length === 0) {
-        Taro.showToast({ title: "未识别到指标", icon: "none" });
-      } else {
-        Taro.showToast({ title: `识别到 ${newIndicators.length} 项指标`, icon: "success" });
+      // 识别第一张本地图片
+      if (localImages.length > 0) {
+        const result = await recognizeExamReport(localImages[0]);
+        if (result.date) {
+          setDate(result.date);
+        }
+        if (result.content) {
+          setContent(result.content);
+        }
       }
+      Taro.hideLoading();
+      Taro.showToast({ title: "识别完成", icon: "success" });
     } catch (error) {
       console.error("识别失败:", error);
       Taro.hideLoading();
@@ -168,11 +152,10 @@ export default function LabTestAdd() {
 
     if (res.confirm) {
       try {
-        // 删除云存储中的图片
         for (const fileId of uploadedImages) {
           await deleteCloudFile(fileId);
         }
-        await labTestService.delete(editId);
+        await examService.delete(editId);
         Taro.showToast({ title: "已删除", icon: "success" });
         setTimeout(() => {
           Taro.navigateBack();
@@ -188,13 +171,12 @@ export default function LabTestAdd() {
 
     const totalImages = localImages.length + uploadedImages.length;
     if (totalImages === 0) {
-      Taro.showToast({ title: "请上传化验单图片", icon: "none" });
+      Taro.showToast({ title: "请上传检查报告图片", icon: "none" });
       return;
     }
 
     setSubmitting(true);
     try {
-      // 上传本地图片到云存储
       let newFileIds: string[] = [];
       if (localImages.length > 0) {
         Taro.showLoading({ title: "上传中..." });
@@ -208,16 +190,17 @@ export default function LabTestAdd() {
       const data = {
         date,
         time,
-        specimen,
+        examType,
         imageFileIds,
-        indicators,
+        content: content || undefined,
+        note: note || undefined,
       };
 
       if (isEdit && editId) {
-        await labTestService.update(editId, data);
+        await examService.update(editId, data);
         Taro.showToast({ title: "更新成功", icon: "success" });
       } else {
-        await labTestService.add(data);
+        await examService.add(data);
         Taro.showToast({ title: "记录成功", icon: "success" });
       }
 
@@ -233,6 +216,14 @@ export default function LabTestAdd() {
     }
   };
 
+  const getExamTypeIndex = () => {
+    return EXAM_TYPES.findIndex((t) => t.value === examType);
+  };
+
+  const handleExamTypeChange = (e: { detail: { value: number } }) => {
+    setExamType(EXAM_TYPES[e.detail.value].value);
+  };
+
   if (loading) {
     return (
       <View className="add-page">
@@ -242,10 +233,11 @@ export default function LabTestAdd() {
   }
 
   const totalImages = localImages.length + uploadedImages.length;
+  const selectedExamType = EXAM_TYPES.find((t) => t.value === examType);
 
   return (
     <View className="add-page">
-      {/* 日期时间 */}
+      {/* 时间 */}
       <View className="section">
         <Text className="section-title">时间</Text>
         <View className="time-row">
@@ -258,27 +250,26 @@ export default function LabTestAdd() {
         </View>
       </View>
 
-      {/* 标本类型 */}
+      {/* 检查类型 */}
       <View className="section">
-        <Text className="section-title">标本类型</Text>
-        <View className="specimen-options">
-          {SPECIMEN_OPTIONS.map((opt) => (
-            <View
-              key={opt.value}
-              className={`specimen-item ${specimen === opt.value ? "active" : ""}`}
-              onClick={() => setSpecimen(opt.value)}
-            >
-              {opt.label}
-            </View>
-          ))}
-        </View>
+        <Text className="section-title">检查类型</Text>
+        <Picker
+          mode="selector"
+          range={EXAM_TYPES}
+          rangeKey="label"
+          value={getExamTypeIndex()}
+          onChange={handleExamTypeChange}
+        >
+          <View className="picker-value">
+            {selectedExamType?.emoji} {selectedExamType?.label}
+          </View>
+        </Picker>
       </View>
 
       {/* 图片 */}
       <View className="section">
-        <Text className="section-title">化验单图片</Text>
+        <Text className="section-title">检查报告图片</Text>
         <View className="image-grid">
-          {/* 已上传的图片（只能删除） */}
           {uploadedImages.map((fileId, index) => (
             <View key={fileId} className="image-item">
               <Image
@@ -288,11 +279,10 @@ export default function LabTestAdd() {
                 onClick={() => handlePreviewImage(fileId)}
               />
               <View className="image-delete" onClick={() => handleDeleteUploadedImage(index)}>
-                ×
+                x
               </View>
             </View>
           ))}
-          {/* 本地待上传的图片（只能删除） */}
           {localImages.map((path, index) => (
             <View key={path} className="image-item image-item-local">
               <Image
@@ -302,11 +292,10 @@ export default function LabTestAdd() {
                 onClick={() => handlePreviewImage(path)}
               />
               <View className="image-delete" onClick={() => handleDeleteLocalImage(index)}>
-                ×
+                x
               </View>
             </View>
           ))}
-          {/* 添加按钮 */}
           {totalImages < 6 && (
             <View className="image-add" onClick={handleChooseImage}>
               <Text className="image-add-icon">+</Text>
@@ -320,7 +309,7 @@ export default function LabTestAdd() {
       {totalImages > 0 && (
         <View className="section">
           <View className="section-header">
-            <Text className="section-title">识别结果</Text>
+            <Text className="section-title">报告内容</Text>
             <View
               className={`recognize-btn ${recognizing ? "disabled" : ""}`}
               onClick={handleRecognize}
@@ -328,79 +317,27 @@ export default function LabTestAdd() {
               {recognizing ? "识别中..." : "AI 识别"}
             </View>
           </View>
-          {indicators.length > 0 ? (
-            <View className="indicators-list">
-              {(() => {
-                // 按类别分组
-                const groups = indicators.reduce(
-                  (acc, ind) => {
-                    const cat = ind.category || "其他";
-                    if (!acc[cat]) acc[cat] = [];
-                    acc[cat].push(ind);
-                    return acc;
-                  },
-                  {} as Record<string, typeof indicators>,
-                );
-
-                const getRefText = (ind: (typeof indicators)[0]) =>
-                  ind.refValue ||
-                  (ind.refMin !== undefined && ind.refMax !== undefined
-                    ? `${ind.refMin}-${ind.refMax}`
-                    : ind.refMin !== undefined
-                      ? `≥${ind.refMin}`
-                      : ind.refMax !== undefined
-                        ? `≤${ind.refMax}`
-                        : "-");
-
-                // 判断值是否超出参考范围
-                const getAbnormalFlag = (ind: (typeof indicators)[0]) => {
-                  const numValue = parseFloat(ind.value);
-                  if (isNaN(numValue)) return "";
-                  if (ind.refMin !== undefined && numValue < ind.refMin) return "↓";
-                  if (ind.refMax !== undefined && numValue > ind.refMax) return "↑";
-                  return "";
-                };
-
-                return Object.entries(groups).map(([category, items]) => (
-                  <View key={category} className="indicator-group">
-                    <Text className="indicator-group-title">{category}</Text>
-                    <View className="indicator-table">
-                      <View className="indicator-table-header">
-                        <Text className="indicator-col-name">指标</Text>
-                        <Text className="indicator-col-value">结果</Text>
-                        <Text className="indicator-col-ref">参考</Text>
-                        <Text className="indicator-col-unit">单位</Text>
-                      </View>
-                      {items.map((ind, idx) => {
-                        const abnormalFlag = getAbnormalFlag(ind);
-                        return (
-                          <View key={idx} className="indicator-table-row">
-                            <Text className="indicator-col-name">{ind.name}</Text>
-                            <Text className="indicator-col-value">
-                              {ind.value}
-                              {abnormalFlag && (
-                                <Text
-                                  className={`abnormal-flag ${abnormalFlag === "↑" ? "high" : "low"}`}
-                                >
-                                  {abnormalFlag}
-                                </Text>
-                              )}
-                            </Text>
-                            <Text className="indicator-col-ref">{getRefText(ind)}</Text>
-                            <Text className="indicator-col-unit">{ind.unit || "-"}</Text>
-                          </View>
-                        );
-                      })}
-                    </View>
-                  </View>
-                ));
-              })()}
-            </View>
-          ) : (
-            <Text className="no-indicators">点击"AI 识别"按钮识别化验指标</Text>
-          )}
+          <Textarea
+            className="content-input"
+            value={content}
+            onInput={(e) => setContent(e.detail.value)}
+            placeholder='点击"AI 识别"或手动输入报告内容'
+            maxlength={2000}
+          />
         </View>
       )}
+
+      {/* 备注 */}
+      <View className="section">
+        <Text className="section-title">备注</Text>
+        <Input
+          className="note-input"
+          value={note}
+          onInput={(e) => setNote(e.detail.value)}
+          placeholder="可选"
+          maxlength={200}
+        />
+      </View>
 
       {/* 提交按钮 */}
       <View className="submit-section">

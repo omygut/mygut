@@ -10,9 +10,18 @@ interface Rect {
   height: number;
 }
 
+const TIPS: Record<string, string> = {
+  labtest:
+    '您上传的图片将用于 AI 自动识别化验指标。请用手指框选并遮盖姓名、身份证号、住址、电话等敏感信息，确认图片中不含敏感个人信息后再点击"确认"。',
+  exam:
+    '您上传的图片将用于 AI 自动识别检查结论。请用手指框选并遮盖姓名、身份证号、住址、电话等敏感信息，确认图片中不含敏感个人信息后再点击"确认"。',
+};
+
 export default function MosaicEditor() {
   const router = useRouter();
   const imageUrl = decodeURIComponent(router.params.url || "");
+  const source = router.params.source || "labtest";
+  const tipText = TIPS[source] || TIPS.labtest;
 
   const [imageInfo, setImageInfo] = useState<{ width: number; height: number } | null>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
@@ -208,10 +217,7 @@ export default function MosaicEditor() {
   return (
     <View className="mosaic-page">
       <View className="tips">
-        <Text className="tips-text">
-          您上传的图片将用于 AI
-          自动识别化验指标。请用手指框选并遮盖姓名、身份证号、住址、电话等敏感信息，确认图片中不含敏感个人信息后再点击"确认"。
-        </Text>
+        <Text className="tips-text">{tipText}</Text>
       </View>
 
       <View className="canvas-container">
