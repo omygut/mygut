@@ -31,23 +31,26 @@ interface DayInfo {
 // 生成日历网格数据（固定 42 格 = 6 行）
 function generateCalendarDays(year: number, month: number): DayInfo[] {
   const daysInMonth = getDaysInMonth(year, month);
-  const firstDay = getFirstDayOfMonth(year, month);
+  let firstDay = getFirstDayOfMonth(year, month);
+
+  // 如果当月1号是周日（firstDay=0），则显示上周整周，确保第一行有上个月日期
+  if (firstDay === 0) {
+    firstDay = 7;
+  }
 
   const days: DayInfo[] = [];
 
   // 前面补上个月的日期
-  if (firstDay > 0) {
-    const prevMonth = month === 0 ? 11 : month - 1;
-    const prevYear = month === 0 ? year - 1 : year;
-    const prevMonthDays = getDaysInMonth(prevYear, prevMonth);
-    for (let i = firstDay - 1; i >= 0; i--) {
-      const day = prevMonthDays - i;
-      days.push({
-        day,
-        isCurrentMonth: false,
-        dateStr: `${prevYear}-${String(prevMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
-      });
-    }
+  const prevMonth = month === 0 ? 11 : month - 1;
+  const prevYear = month === 0 ? year - 1 : year;
+  const prevMonthDays = getDaysInMonth(prevYear, prevMonth);
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const day = prevMonthDays - i;
+    days.push({
+      day,
+      isCurrentMonth: false,
+      dateStr: `${prevYear}-${String(prevMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+    });
   }
 
   // 当月的天数
