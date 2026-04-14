@@ -4,6 +4,7 @@ import { EXAM_TYPES } from "../../constants/exam";
 import { SEVERITY_OPTIONS, FEELING_OPTIONS } from "../../constants/symptom";
 import { AMOUNT_OPTIONS } from "../../constants/meal";
 import { STOOL_AMOUNTS } from "../../constants/stool";
+import { normalizeIndicators } from "../../services/labtest-standards";
 import BristolIcon from "../BristolIcon";
 import type {
   SymptomRecord,
@@ -11,6 +12,7 @@ import type {
   StoolRecord,
   MedicationRecord,
   LabTestRecord,
+  LabTestIndicator,
   ExamRecord,
 } from "../../types";
 import "./index.css";
@@ -71,6 +73,15 @@ const getExamTypeInfo = (examType: string) => {
   return EXAM_TYPES.find((t) => t.value === examType) ?? { emoji: UNKNOWN, label: UNKNOWN };
 };
 
+const getLabTestCategories = (indicators: LabTestIndicator[]): string => {
+  if (indicators.length === 0) return "";
+  const normalized = normalizeIndicators(indicators);
+  const categories = [...new Set(normalized.map((i) => i.category).filter(Boolean))];
+  if (categories.length === 0) return "";
+  if (categories.length <= 9) return categories.join("、");
+  return `${categories.slice(0, 9).join("、")}等${categories.length}类`;
+};
+
 export default function RecordItem({ record, showTypeIcon = false }: RecordItemProps) {
   const handleClick = () => {
     const path = `${EDIT_PATHS[record._type]}?id=${record._id}`;
@@ -116,23 +127,21 @@ export default function RecordItem({ record, showTypeIcon = false }: RecordItemP
             </Text>
           </>
         );
-      case "labtest":
+      case "labtest": {
+        const categoryText = getLabTestCategories(record.indicators);
         return (
           <Text className="record-desc">
-            {record.imageFileIds.length}张图片
-            {record.indicators.length > 0 && ` · ${record.indicators.length}项指标`}
+            {categoryText || `${record.imageFileIds.length}张图片`}
           </Text>
         );
+      }
       case "exam": {
         const examTypeInfo = getExamTypeInfo(record.examType);
         return (
-          <>
-            <Text className="record-feeling">{examTypeInfo.emoji}</Text>
-            <Text className="record-desc">
-              {record.examName || examTypeInfo.label}
-              {record.imageFileIds.length > 0 && ` · ${record.imageFileIds.length}张图片`}
-            </Text>
-          </>
+          <Text className="record-desc">
+            {record.examName || examTypeInfo.label}
+            {record.imageFileIds.length > 0 && ` · ${record.imageFileIds.length}张图片`}
+          </Text>
         );
       }
     }

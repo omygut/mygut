@@ -280,7 +280,7 @@ export default function ExamAdd() {
                 className={`exam-type-item ${examType === opt.value ? "active" : ""}`}
                 onClick={() => setExamType(opt.value)}
               >
-                {opt.emoji} {opt.label}
+                {opt.label}
               </View>
             ))}
           </View>
