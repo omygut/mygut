@@ -1,6 +1,6 @@
 // 检查类型
 export const EXAM_TYPES = [
-  { value: "ultrasound", label: "B超", emoji: "🔊" },
+  { value: "ultrasound", label: "超声", emoji: "🔊" },
   { value: "ct", label: "CT", emoji: "🔬" },
   { value: "mri", label: "MRI", emoji: "🧲" },
   { value: "colonoscopy", label: "肠镜", emoji: "🔭" },
