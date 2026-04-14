@@ -1,6 +1,6 @@
 {
   "name": "mygut",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": true,
   "description": "MyGut - 肠道健康记录",
   "scripts": {
@@ -51,6 +51,7 @@
     "oxlint": "^1.59.0",
     "picocolors": "^1.1.1",
     "postcss": "^8.5.6",
+    "source-map-js": "^1.2.1",
     "stylelint": "^16.4.0",
     "stylelint-config-standard": "^38.0.0",
     "tsx": "^4.21.0",

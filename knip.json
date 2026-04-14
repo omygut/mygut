@@ -18,6 +18,7 @@
     "miniprogram-ci",
     "nanoid",
     "picocolors",
+    "source-map-js",
     "tsx",
     "vite"
   ],
