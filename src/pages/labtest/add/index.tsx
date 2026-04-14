@@ -23,7 +23,7 @@ export default function LabTestAdd() {
   const isEdit = !!editId;
 
   const [date, setDate] = useState(formatDate());
-  const [time, setTime] = useState(formatTime());
+  const [time, setTime] = useState("10:00");
   const [specimen, setSpecimen] = useState<SpecimenType>("血液");
   // 本地待上传的图片路径
   const [localImages, setLocalImages] = useState<string[]>([]);
