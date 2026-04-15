@@ -29,14 +29,10 @@ const TYPE_OPTIONS: TypeOption[] = [
 ];
 
 export default function History() {
-  const [selectedTypes, setSelectedTypes] = useState<RecordType[]>([
-    "symptom",
-    "medication",
-    "meal",
-    "stool",
-    "labtest",
-    "exam",
-  ]);
+  const [selectedTypes, setSelectedTypes] = useState<RecordType[]>(() => {
+    const saved = Taro.getStorageSync("history_selected_types");
+    return saved || ["symptom", "medication", "meal", "stool", "labtest", "exam"];
+  });
   const [loading, setLoading] = useState(true);
   const [records, setRecords] = useState<AnyRecord[]>([]);
 
@@ -129,6 +125,7 @@ export default function History() {
       newTypes = [...selectedTypes, type];
     }
     setSelectedTypes(newTypes);
+    Taro.setStorageSync("history_selected_types", newTypes);
     loadData(newTypes);
   };
 
