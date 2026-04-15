@@ -156,11 +156,11 @@ export default function CalendarPopup({ visible, value, onChange, onClose }: Cal
     if (absDelta >= SWIPE_THRESHOLD) {
       // Swipe detected
       if (deltaX > 0) {
-        // Swipe right -> next month
-        handleNextMonth();
-      } else {
-        // Swipe left -> previous month
+        // Swipe right -> previous month (like iOS calendar)
         handlePrevMonth();
+      } else {
+        // Swipe left -> next month (like iOS calendar)
+        handleNextMonth();
       }
     } else if (absDelta < TAP_THRESHOLD && touchRef.current.targetIndex !== null) {
       // Tap detected
