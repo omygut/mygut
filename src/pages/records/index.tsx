@@ -1,5 +1,5 @@
 import { View, Text } from "@tarojs/components";
-import Taro, { useDidShow } from "@tarojs/taro";
+import Taro, { useDidShow, usePullDownRefresh } from "@tarojs/taro";
 import { useState, useCallback } from "react";
 import { symptomService } from "../../services/symptom";
 import { mealService } from "../../services/meal";
@@ -103,6 +103,11 @@ export default function Records() {
     if (recordGroups.length === 0) {
       loadData(currentDate);
     }
+  });
+
+  usePullDownRefresh(async () => {
+    await loadData(currentDate);
+    Taro.stopPullDownRefresh();
   });
 
   const handlePrevDate = () => {

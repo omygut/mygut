@@ -1,5 +1,5 @@
 import { View, Text } from "@tarojs/components";
-import Taro, { useDidShow } from "@tarojs/taro";
+import Taro, { useDidShow, usePullDownRefresh } from "@tarojs/taro";
 import { useState, useCallback } from "react";
 import { symptomService } from "../../services/symptom";
 import { mealService } from "../../services/meal";
@@ -112,6 +112,11 @@ export default function History() {
     if (records.length === 0) {
       loadData(selectedTypes);
     }
+  });
+
+  usePullDownRefresh(async () => {
+    await loadData(selectedTypes);
+    Taro.stopPullDownRefresh();
   });
 
   const handleTypeToggle = (type: RecordType) => {
