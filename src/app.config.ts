@@ -32,7 +32,7 @@ export default defineAppConfig({
       },
       {
         pagePath: "pages/records/index",
-        text: "📅 日期",
+        text: "📅 记录",
       },
       {
         pagePath: "pages/history/index",
