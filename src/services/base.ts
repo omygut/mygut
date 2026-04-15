@@ -101,5 +101,42 @@ export function createRecordService<T extends BaseRecord>(collection: string) {
       const userId = await getOpenId();
       await db.collection(collection).where({ _id: id, userId }).update({ data });
     },
+
+    async getRecentBefore(beforeDate: string, beforeTime: string, limit = 20): Promise<T[]> {
+      const db = getDatabase();
+      const userId = await getOpenId();
+      const _ = db.command;
+
+      const PAGE_SIZE = 20;
+      const allData: T[] = [];
+
+      while (allData.length < limit) {
+        const batchLimit = Math.min(PAGE_SIZE, limit - allData.length);
+        const res = await db
+          .collection(collection)
+          .where({
+            userId,
+            deletedAt: _.exists(false),
+            date: _.lte(beforeDate),
+          })
+          .orderBy("date", "desc")
+          .orderBy("time", "desc")
+          .skip(allData.length)
+          .limit(batchLimit)
+          .get();
+
+        // 过滤掉同一天但时间 >= beforeTime 的记录
+        const filtered = (res.data as T[]).filter((r) => {
+          if (r.date < beforeDate) return true;
+          return r.time < beforeTime;
+        });
+
+        allData.push(...filtered);
+
+        if (res.data.length < batchLimit) break;
+      }
+
+      return allData.slice(0, limit);
+    },
   };
 }

@@ -1,6 +1,6 @@
-import { View, Text } from "@tarojs/components";
-import Taro, { useDidShow, usePullDownRefresh } from "@tarojs/taro";
-import { useState, useCallback } from "react";
+import { View, Text, ScrollView } from "@tarojs/components";
+import Taro, { useDidShow } from "@tarojs/taro";
+import { useState, useCallback, useRef } from "react";
 import { symptomService } from "../../services/symptom";
 import { mealService } from "../../services/meal";
 import { stoolService } from "../../services/stool";
@@ -9,108 +9,100 @@ import { labTestService } from "../../services/labtest";
 import { examService } from "../../services/exam";
 import { formatDisplayDate, getWeekday } from "../../utils/date";
 import RecordItem, { AnyRecord } from "../../components/RecordItem";
-import { RecordType, RECORD_TYPES, RECORD_TYPE_OPTIONS } from "../../types";
+import { RecordType, RECORD_TYPE_OPTIONS } from "../../types";
 import "./index.css";
 
+const PAGE_SIZE = 50;
+
+const services = {
+  symptom: symptomService,
+  medication: medicationService,
+  meal: mealService,
+  stool: stoolService,
+  labtest: labTestService,
+  exam: examService,
+} as const;
+
 export default function History() {
-  const [selectedTypes, setSelectedTypes] = useState<RecordType[]>(() => {
-    const saved = Taro.getStorageSync("history_selected_types");
-    return saved || [...RECORD_TYPES];
+  const [selectedType, setSelectedType] = useState<RecordType>(() => {
+    return Taro.getStorageSync("history_selected_type") || "meal";
   });
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [records, setRecords] = useState<AnyRecord[]>([]);
+  const [hasMore, setHasMore] = useState(true);
 
-  const loadData = useCallback(async (types: RecordType[]) => {
-    setLoading(true);
-    try {
-      const promises: Promise<AnyRecord[]>[] = [];
+  const cursorRef = useRef({ date: "9999-12-31", time: "23:59" });
 
-      if (types.includes("symptom")) {
-        promises.push(
-          symptomService
-            .getRecent(200)
-            .then((data) => data.map((r) => ({ ...r, _type: "symptom" as const }))),
-        );
-      }
-      if (types.includes("medication")) {
-        promises.push(
-          medicationService
-            .getRecent(200)
-            .then((data) => data.map((r) => ({ ...r, _type: "medication" as const }))),
-        );
-      }
-      if (types.includes("meal")) {
-        promises.push(
-          mealService
-            .getRecent(200)
-            .then((data) => data.map((r) => ({ ...r, _type: "meal" as const }))),
-        );
-      }
-      if (types.includes("stool")) {
-        promises.push(
-          stoolService
-            .getRecent(200)
-            .then((data) => data.map((r) => ({ ...r, _type: "stool" as const }))),
-        );
-      }
-      if (types.includes("labtest")) {
-        promises.push(
-          labTestService
-            .getRecent(200)
-            .then((data) => data.map((r) => ({ ...r, _type: "labtest" as const }))),
-        );
-      }
-      if (types.includes("exam")) {
-        promises.push(
-          examService
-            .getRecent(200)
-            .then((data) => data.map((r) => ({ ...r, _type: "exam" as const }))),
-        );
-      }
+  const loadMore = useCallback(async (type: RecordType, isInitial = false) => {
+    const service = services[type];
+    const cursor = cursorRef.current;
 
-      const results = await Promise.all(promises);
-      const allRecords = results.flat();
+    const data = await service.getRecentBefore(cursor.date, cursor.time, PAGE_SIZE);
 
-      // 按日期+时间倒序排列
-      allRecords.sort((a, b) => {
-        const dateCompare = b.date.localeCompare(a.date);
-        if (dateCompare !== 0) return dateCompare;
-        return b.time.localeCompare(a.time);
-      });
-
-      setRecords(allRecords);
-    } catch (error) {
-      console.error("加载数据失败:", error);
-      Taro.showToast({ title: "加载失败", icon: "none" });
-    } finally {
-      setLoading(false);
+    if (data.length < PAGE_SIZE) {
+      setHasMore(false);
     }
+
+    if (data.length > 0) {
+      const last = data[data.length - 1];
+      cursorRef.current = { date: last.date, time: last.time };
+    }
+
+    return data.map((r) => ({ ...r, _type: type })) as AnyRecord[];
   }, []);
 
+  const loadInitial = useCallback(
+    async (type: RecordType) => {
+      setLoading(true);
+      setHasMore(true);
+      cursorRef.current = { date: "9999-12-31", time: "23:59" };
+
+      try {
+        const newRecords = await loadMore(type, true);
+        setRecords(newRecords);
+      } catch (error) {
+        console.error("加载数据失败:", error);
+        Taro.showToast({ title: "加载失败", icon: "none" });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loadMore],
+  );
+
+  const handleLoadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const newRecords = await loadMore(selectedType);
+      if (newRecords.length > 0) {
+        setRecords((prev) => [...prev, ...newRecords]);
+      }
+    } catch (error) {
+      console.error("加载更多失败:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadMore, selectedType, loadingMore, hasMore]);
+
   useDidShow(() => {
-    // Only load on first visit, not when returning from detail page
     if (records.length === 0) {
-      loadData(selectedTypes);
+      loadInitial(selectedType);
     }
   });
 
-  usePullDownRefresh(async () => {
-    await loadData(selectedTypes);
-    Taro.stopPullDownRefresh();
-  });
+  const handleRefresh = useCallback(async () => {
+    await loadInitial(selectedType);
+  }, [loadInitial, selectedType]);
 
-  const handleTypeToggle = (type: RecordType) => {
-    let newTypes: RecordType[];
-    if (selectedTypes.includes(type)) {
-      // 至少保留一个类型
-      if (selectedTypes.length === 1) return;
-      newTypes = selectedTypes.filter((t) => t !== type);
-    } else {
-      newTypes = [...selectedTypes, type];
-    }
-    setSelectedTypes(newTypes);
-    Taro.setStorageSync("history_selected_types", newTypes);
-    loadData(newTypes);
+  const handleTypeChange = (type: RecordType) => {
+    if (type === selectedType) return;
+    setSelectedType(type);
+    Taro.setStorageSync("history_selected_type", type);
+    setRecords([]);
+    loadInitial(type);
   };
 
   // 按日期分组记录
@@ -126,13 +118,12 @@ export default function History() {
 
   return (
     <View className="history-page">
-      {/* 类型筛选 */}
       <View className="type-filter">
         {RECORD_TYPE_OPTIONS.map((option) => (
           <View
             key={option.value}
-            className={`type-option ${selectedTypes.includes(option.value) ? "active" : ""}`}
-            onClick={() => handleTypeToggle(option.value)}
+            className={`type-option ${selectedType === option.value ? "active" : ""}`}
+            onClick={() => handleTypeChange(option.value)}
           >
             <Text className="type-icon">{option.icon}</Text>
             <Text className="type-label">{option.label}</Text>
@@ -147,22 +138,42 @@ export default function History() {
           <Text className="empty-text">暂无记录</Text>
         </View>
       ) : (
-        <View className="records-list">
-          {groupedRecords.map((group) => (
-            <View key={group.date} className="date-group">
-              <View className="date-header">
-                <Text className="date-text">
-                  {formatDisplayDate(group.date)} {getWeekday(group.date)}
-                </Text>
+        <ScrollView
+          className="records-scroll"
+          scrollY
+          refresherEnabled
+          refresherTriggered={loading}
+          onRefresherRefresh={handleRefresh}
+          onScrollToLower={handleLoadMore}
+          lowerThreshold={100}
+        >
+          <View className="records-list">
+            {groupedRecords.map((group) => (
+              <View key={group.date} className="date-group">
+                <View className="date-header">
+                  <Text className="date-text">
+                    {formatDisplayDate(group.date)} {getWeekday(group.date)}
+                  </Text>
+                </View>
+                <View className="date-records">
+                  {group.records.map((record) => (
+                    <RecordItem key={record._id} record={record} />
+                  ))}
+                </View>
               </View>
-              <View className="date-records">
-                {group.records.map((record) => (
-                  <RecordItem key={record._id} record={record} showTypeIcon />
-                ))}
-              </View>
+            ))}
+          </View>
+          {loadingMore && (
+            <View className="loading-more">
+              <Text>加载中...</Text>
             </View>
-          ))}
-        </View>
+          )}
+          {!hasMore && records.length > 0 && (
+            <View className="no-more">
+              <Text>没有更多了</Text>
+            </View>
+          )}
+        </ScrollView>
       )}
     </View>
   );
