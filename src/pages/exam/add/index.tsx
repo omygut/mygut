@@ -359,12 +359,13 @@ export default function ExamAdd() {
       {/* 备注 */}
       <View className="section">
         <Text className="section-title">备注</Text>
-        <Input
+        <Textarea
           className="note-input"
           value={note}
           onInput={(e) => setNote(e.detail.value)}
-          placeholder="可选"
-          maxlength={200}
+          placeholder="添加备注（可选）"
+          maxlength={500}
+          autoHeight
         />
       </View>
 

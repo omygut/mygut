@@ -288,6 +288,7 @@ export default function SymptomAdd() {
           value={note}
           onInput={(e) => setNote(e.detail.value)}
           maxlength={500}
+          autoHeight
         />
       </View>
 
