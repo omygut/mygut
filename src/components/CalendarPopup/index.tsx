@@ -136,6 +136,43 @@ export default function CalendarPopup({ visible, value, onChange, onClose }: Cal
     onClose();
   };
 
+  const handleTouchStart = (e: {
+    touches: { clientX: number }[];
+    target: { dataset?: { index?: string } };
+  }) => {
+    const touch = e.touches[0];
+    const targetIndex = e.target.dataset?.index;
+    touchRef.current = {
+      startX: touch.clientX,
+      targetIndex: targetIndex !== undefined ? parseInt(targetIndex, 10) : null,
+    };
+  };
+
+  const handleTouchEnd = (e: { changedTouches: { clientX: number }[] }) => {
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchRef.current.startX;
+    const absDelta = Math.abs(deltaX);
+
+    if (absDelta >= SWIPE_THRESHOLD) {
+      // Swipe detected
+      if (deltaX > 0) {
+        // Swipe right -> next month
+        handleNextMonth();
+      } else {
+        // Swipe left -> previous month
+        handlePrevMonth();
+      }
+    } else if (absDelta < TAP_THRESHOLD && touchRef.current.targetIndex !== null) {
+      // Tap detected
+      const dayInfo = days[touchRef.current.targetIndex];
+      if (dayInfo) {
+        handleDayClick(dayInfo);
+      }
+    }
+    // Reset touch state
+    touchRef.current = { startX: 0, targetIndex: null };
+  };
+
   const todayYear = parseInt(today.slice(0, 4));
   const todayMonth = parseInt(today.slice(5, 7)) - 1;
   const isCurrentMonth = viewYear === todayYear && viewMonth === todayMonth;
