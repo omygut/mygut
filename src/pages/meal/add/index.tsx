@@ -339,6 +339,7 @@ export default function MealAdd() {
           value={note}
           onInput={(e) => setNote(e.detail.value)}
           maxlength={500}
+          autoHeight
         />
       </View>
 

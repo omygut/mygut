@@ -365,6 +365,7 @@ export default function ExamAdd() {
           onInput={(e) => setNote(e.detail.value)}
           placeholder="添加备注（可选）"
           maxlength={500}
+          autoHeight
         />
       </View>
 
