@@ -1,7 +1,12 @@
 import { View, Text } from "@tarojs/components";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { formatDate } from "../../utils/date";
 import "./index.css";
+
+interface TouchState {
+  startX: number;
+  targetIndex: number | null;
+}
 
 interface CalendarPopupProps {
   visible: boolean;
@@ -82,6 +87,10 @@ export default function CalendarPopup({ visible, value, onChange, onClose }: Cal
   const today = formatDate();
   const [viewYear, setViewYear] = useState(() => parseInt(value.slice(0, 4)));
   const [viewMonth, setViewMonth] = useState(() => parseInt(value.slice(5, 7)) - 1);
+
+  const SWIPE_THRESHOLD = 50;
+  const TAP_THRESHOLD = 10;
+  const touchRef = useRef<TouchState>({ startX: 0, targetIndex: null });
 
   // 当 value 改变时，更新视图月份
   useEffect(() => {
