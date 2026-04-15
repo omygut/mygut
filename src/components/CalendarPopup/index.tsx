@@ -1,7 +1,12 @@
 import { View, Text } from "@tarojs/components";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { formatDate } from "../../utils/date";
 import "./index.css";
+
+interface TouchState {
+  startX: number;
+  targetIndex: number | null;
+}
 
 interface CalendarPopupProps {
   visible: boolean;
@@ -82,6 +87,11 @@ export default function CalendarPopup({ visible, value, onChange, onClose }: Cal
   const today = formatDate();
   const [viewYear, setViewYear] = useState(() => parseInt(value.slice(0, 4)));
   const [viewMonth, setViewMonth] = useState(() => parseInt(value.slice(5, 7)) - 1);
+  const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(null);
+
+  const SWIPE_THRESHOLD = 50;
+  const TAP_THRESHOLD = 10;
+  const touchRef = useRef<TouchState>({ startX: 0, targetIndex: null });
 
   // 当 value 改变时，更新视图月份
   useEffect(() => {
@@ -92,6 +102,19 @@ export default function CalendarPopup({ visible, value, onChange, onClose }: Cal
   if (!visible) return null;
 
   const days = generateCalendarDays(viewYear, viewMonth);
+
+  const handlePrevYear = () => {
+    setViewYear(viewYear - 1);
+  };
+
+  const handleNextYear = () => {
+    const todayYear = parseInt(today.slice(0, 4));
+    // 不能超过今天所在年份
+    if (viewYear >= todayYear) {
+      return;
+    }
+    setViewYear(viewYear + 1);
+  };
 
   const handlePrevMonth = () => {
     if (viewMonth === 0) {
@@ -127,15 +150,70 @@ export default function CalendarPopup({ visible, value, onChange, onClose }: Cal
     onClose();
   };
 
+  const handleTouchStart = (e: {
+    touches: { clientX: number }[];
+    target: { dataset?: { index?: string } };
+    stopPropagation: () => void;
+  }) => {
+    e.stopPropagation();
+    const touch = e.touches[0];
+    const targetIndex = e.target.dataset?.index;
+    touchRef.current = {
+      startX: touch.clientX,
+      targetIndex: targetIndex !== undefined ? parseInt(targetIndex, 10) : null,
+    };
+  };
+
+  const handleTouchMove = (e: { stopPropagation: () => void }) => {
+    e.stopPropagation();
+  };
+
+  const handleTouchEnd = (e: {
+    changedTouches: { clientX: number }[];
+    stopPropagation: () => void;
+  }) => {
+    e.stopPropagation();
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchRef.current.startX;
+    const absDelta = Math.abs(deltaX);
+
+    if (absDelta >= SWIPE_THRESHOLD) {
+      // Swipe detected
+      if (deltaX > 0) {
+        // Swipe right -> previous month (like iOS calendar)
+        setSlideDirection("right");
+        handlePrevMonth();
+        setTimeout(() => setSlideDirection(null), 200);
+      } else {
+        // Swipe left -> next month (like iOS calendar)
+        setSlideDirection("left");
+        handleNextMonth();
+        setTimeout(() => setSlideDirection(null), 200);
+      }
+    } else if (absDelta < TAP_THRESHOLD && touchRef.current.targetIndex !== null) {
+      // Tap detected
+      const dayInfo = days[touchRef.current.targetIndex];
+      if (dayInfo) {
+        handleDayClick(dayInfo);
+      }
+    }
+    // Reset touch state
+    touchRef.current = { startX: 0, targetIndex: null };
+  };
+
   const todayYear = parseInt(today.slice(0, 4));
   const todayMonth = parseInt(today.slice(5, 7)) - 1;
   const isCurrentMonth = viewYear === todayYear && viewMonth === todayMonth;
+  const isCurrentYear = viewYear === todayYear;
 
   return (
     <View className="calendar-popup-mask" onClick={onClose}>
       <View className="calendar-popup" onClick={(e) => e.stopPropagation()}>
         {/* 月份标题 */}
         <View className="calendar-header">
+          <Text className="calendar-nav" onClick={handlePrevYear}>
+            ◀◀
+          </Text>
           <Text className="calendar-nav" onClick={handlePrevMonth}>
             ◀
           </Text>
@@ -147,6 +225,12 @@ export default function CalendarPopup({ visible, value, onChange, onClose }: Cal
             onClick={handleNextMonth}
           >
             ▶
+          </Text>
+          <Text
+            className={`calendar-nav ${isCurrentYear ? "disabled" : ""}`}
+            onClick={handleNextYear}
+          >
+            ▶▶
           </Text>
         </View>
 
@@ -160,12 +244,18 @@ export default function CalendarPopup({ visible, value, onChange, onClose }: Cal
         </View>
 
         {/* 日期网格 */}
-        <View className="calendar-days">
+        <View
+          className={`calendar-days ${slideDirection ? `slide-${slideDirection}` : ""}`}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          catchMove
+        >
           {days.map((dayInfo, index) => (
             <View
               key={index}
+              data-index={index}
               className={`calendar-day ${!dayInfo.isCurrentMonth ? "other-month" : ""} ${dayInfo.dateStr === today ? "today" : ""} ${dayInfo.dateStr === value ? "selected" : ""} ${dayInfo.dateStr > today ? "future" : ""}`}
-              onClick={() => handleDayClick(dayInfo)}
             >
               <Text className="day-text">{dayInfo.day}</Text>
             </View>
