@@ -425,6 +425,7 @@ export const STANDARD_INDICATORS: StandardIndicator[] = [
     "category": "肝功能",
     "nameZh": "白球比",
     "abbr": "A/G",
+    "unit": "",
     "refMin": 1.2,
     "refMax": 2.5,
     "aliases": [
@@ -720,6 +721,7 @@ export const STANDARD_INDICATORS: StandardIndicator[] = [
     "category": "凝血功能",
     "nameZh": "国际标准化比值",
     "abbr": "INR",
+    "unit": "",
     "refMin": 0.8,
     "refMax": 1.2
   },
@@ -746,6 +748,7 @@ export const STANDARD_INDICATORS: StandardIndicator[] = [
     "category": "尿常规",
     "nameZh": "比重",
     "abbr": "SG",
+    "unit": "",
     "refMin": 1.004,
     "refMax": 1.03,
     "aliases": [
@@ -757,6 +760,7 @@ export const STANDARD_INDICATORS: StandardIndicator[] = [
     "category": "尿常规",
     "nameZh": "pH值",
     "abbr": "pH",
+    "unit": "",
     "refMin": 4.5,
     "refMax": 8,
     "aliases": [
@@ -768,6 +772,7 @@ export const STANDARD_INDICATORS: StandardIndicator[] = [
     "category": "尿常规",
     "nameZh": "白细胞",
     "abbr": "LEU",
+    "unit": "",
     "refValue": "negative",
     "aliases": [
       "尿白细胞"
@@ -778,6 +783,7 @@ export const STANDARD_INDICATORS: StandardIndicator[] = [
     "category": "尿常规",
     "nameZh": "隐血",
     "abbr": "ERY",
+    "unit": "",
     "refValue": "negative",
     "aliases": [
       "尿隐血",
@@ -789,6 +795,7 @@ export const STANDARD_INDICATORS: StandardIndicator[] = [
     "category": "尿常规",
     "nameZh": "亚硝酸盐",
     "abbr": "NIT",
+    "unit": "",
     "refValue": "negative"
   },
   {
@@ -796,6 +803,7 @@ export const STANDARD_INDICATORS: StandardIndicator[] = [
     "category": "尿常规",
     "nameZh": "酮体",
     "abbr": "KET",
+    "unit": "",
     "refValue": "negative",
     "aliases": [
       "尿酮体"
@@ -806,6 +814,7 @@ export const STANDARD_INDICATORS: StandardIndicator[] = [
     "category": "尿常规",
     "nameZh": "胆红素",
     "abbr": "BIL",
+    "unit": "",
     "refValue": "negative",
     "aliases": [
       "尿胆红素"
@@ -816,6 +825,7 @@ export const STANDARD_INDICATORS: StandardIndicator[] = [
     "category": "尿常规",
     "nameZh": "尿胆原",
     "abbr": "UBG",
+    "unit": "",
     "refValue": "negative"
   },
   {
@@ -823,6 +833,7 @@ export const STANDARD_INDICATORS: StandardIndicator[] = [
     "category": "尿常规",
     "nameZh": "蛋白质",
     "abbr": "PRO",
+    "unit": "",
     "refValue": "negative",
     "aliases": [
       "尿蛋白"
@@ -833,6 +844,7 @@ export const STANDARD_INDICATORS: StandardIndicator[] = [
     "category": "尿常规",
     "nameZh": "葡萄糖",
     "abbr": "GLU",
+    "unit": "",
     "refValue": "negative",
     "aliases": [
       "尿糖",
