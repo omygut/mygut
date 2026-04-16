@@ -51,12 +51,19 @@ export default function History() {
   const [endCalendarVisible, setEndCalendarVisible] = useState(false);
 
   const cursorRef = useRef({ date: "9999-12-31", time: "23:59" });
+  const dateRangeRef = useRef({ startDate: "", endDate: "" });
 
-  const loadMore = useCallback(async (type: RecordType, isInitial = false) => {
+  const loadMore = useCallback(async (type: RecordType, startDate: string, endDate: string) => {
     const service = services[type];
     const cursor = cursorRef.current;
 
-    const data = await service.getRecentBefore(cursor.date, cursor.time, PAGE_SIZE);
+    const data = await service.getByDateRangeBefore(
+      startDate,
+      endDate,
+      cursor.date,
+      cursor.time,
+      PAGE_SIZE,
+    );
 
     if (data.length < PAGE_SIZE) {
       setHasMore(false);
@@ -71,13 +78,14 @@ export default function History() {
   }, []);
 
   const loadInitial = useCallback(
-    async (type: RecordType) => {
+    async (type: RecordType, startDate: string, endDate: string) => {
       setLoading(true);
       setHasMore(true);
       cursorRef.current = { date: "9999-12-31", time: "23:59" };
+      dateRangeRef.current = { startDate, endDate };
 
       try {
-        const newRecords = await loadMore(type, true);
+        const newRecords = await loadMore(type, startDate, endDate);
         setRecords(newRecords);
       } catch (error) {
         console.error("加载数据失败:", error);
@@ -94,7 +102,8 @@ export default function History() {
 
     setLoadingMore(true);
     try {
-      const newRecords = await loadMore(selectedType);
+      const { startDate, endDate } = dateRangeRef.current;
+      const newRecords = await loadMore(selectedType, startDate, endDate);
       if (newRecords.length > 0) {
         setRecords((prev) => [...prev, ...newRecords]);
       }
@@ -105,23 +114,32 @@ export default function History() {
     }
   }, [loadMore, selectedType, loadingMore, hasMore]);
 
-  useDidShow(() => {
-    if (records.length === 0) {
-      loadInitial(selectedType);
+  const getEffectiveDateRange = useCallback(() => {
+    if (dateRangePreset === "custom") {
+      return { startDate: customStartDate, endDate: customEndDate };
     }
+    const days = parseInt(dateRangePreset, 10);
+    return { startDate: getDateDaysAgo(days), endDate: formatDate() };
+  }, [dateRangePreset, customStartDate, customEndDate]);
+
+  useDidShow(() => {
+    const { startDate, endDate } = getEffectiveDateRange();
+    loadInitial(selectedType, startDate, endDate);
   });
 
   const handleRefresh = useCallback(async () => {
-    await loadInitial(selectedType);
-  }, [loadInitial, selectedType]);
+    const { startDate, endDate } = getEffectiveDateRange();
+    await loadInitial(selectedType, startDate, endDate);
+  }, [loadInitial, selectedType, getEffectiveDateRange]);
 
   const handleTypeChange = (type: RecordType) => {
     if (type === selectedType) return;
     setSelectedType(type);
     Taro.setStorageSync("history_selected_type", type);
     setRecords([]);
-    setViewMode("records"); // Reset to records view when changing type
-    loadInitial(type);
+    setViewMode("records");
+    const { startDate, endDate } = getEffectiveDateRange();
+    loadInitial(type, startDate, endDate);
   };
 
   const handleViewModeChange = (mode: ViewMode) => {
@@ -133,17 +151,18 @@ export default function History() {
     setDateRangePreset(preset);
     if (preset !== "custom") {
       const days = parseInt(preset, 10);
-      setCustomStartDate(getDateDaysAgo(days));
-      setCustomEndDate(formatDate());
+      const startDate = getDateDaysAgo(days);
+      const endDate = formatDate();
+      setCustomStartDate(startDate);
+      setCustomEndDate(endDate);
+      setRecords([]);
+      loadInitial(selectedType, startDate, endDate);
     }
   };
 
-  const getEffectiveDateRange = () => {
-    if (dateRangePreset === "custom") {
-      return { startDate: customStartDate, endDate: customEndDate };
-    }
-    const days = parseInt(dateRangePreset, 10);
-    return { startDate: getDateDaysAgo(days), endDate: formatDate() };
+  const handleCustomDateChange = (start: string, end: string) => {
+    setRecords([]);
+    loadInitial(selectedType, start, end);
   };
 
   // 按日期分组记录
@@ -215,10 +234,12 @@ export default function History() {
         visible={startCalendarVisible}
         value={customStartDate}
         onChange={(date) => {
+          const newEndDate = date > customEndDate ? date : customEndDate;
           setCustomStartDate(date);
           if (date > customEndDate) {
             setCustomEndDate(date);
           }
+          handleCustomDateChange(date, newEndDate);
         }}
         onClose={() => setStartCalendarVisible(false)}
       />
@@ -226,10 +247,12 @@ export default function History() {
         visible={endCalendarVisible}
         value={customEndDate}
         onChange={(date) => {
+          const newStartDate = date < customStartDate ? date : customStartDate;
           setCustomEndDate(date);
           if (date < customStartDate) {
             setCustomStartDate(date);
           }
+          handleCustomDateChange(newStartDate, date);
         }}
         onClose={() => setEndCalendarVisible(false)}
       />

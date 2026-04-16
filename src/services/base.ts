@@ -168,5 +168,49 @@ export function createRecordService<T extends BaseRecord>(collection: string) {
 
       return allData;
     },
+
+    async getByDateRangeBefore(
+      startDate: string,
+      endDate: string,
+      beforeDate: string,
+      beforeTime: string,
+      limit = 20,
+    ): Promise<T[]> {
+      const db = getDatabase();
+      const userId = await getOpenId();
+      const _ = db.command;
+
+      const PAGE_SIZE = 20;
+      const allData: T[] = [];
+
+      while (allData.length < limit) {
+        const batchLimit = Math.min(PAGE_SIZE, limit - allData.length);
+        const res = await db
+          .collection(collection)
+          .where({
+            userId,
+            deletedAt: _.exists(false),
+            date: _.gte(startDate).and(_.lte(beforeDate)),
+          })
+          .orderBy("date", "desc")
+          .orderBy("time", "desc")
+          .skip(allData.length)
+          .limit(batchLimit)
+          .get();
+
+        // 过滤：排除超出 endDate 的，以及游标位置之后的记录
+        const filtered = (res.data as T[]).filter((r) => {
+          if (r.date > endDate) return false;
+          if (r.date < beforeDate) return true;
+          return r.time < beforeTime;
+        });
+
+        allData.push(...filtered);
+
+        if (res.data.length < batchLimit) break;
+      }
+
+      return allData.slice(0, limit);
+    },
   };
 }
