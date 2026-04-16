@@ -14,7 +14,7 @@ import { RecordType, RECORD_TYPE_OPTIONS } from "../../types";
 import "./index.css";
 
 type ViewMode = "records" | "stats";
-type DateRangePreset = "7" | "30" | "90" | "custom";
+type DateRangePreset = "7" | "30" | "365" | "custom";
 
 const PAGE_SIZE = 50;
 
@@ -177,19 +177,19 @@ export default function History() {
           className={`date-range-option ${dateRangePreset === "7" ? "active" : ""}`}
           onClick={() => handleDateRangePresetChange("7")}
         >
-          <Text>7天</Text>
+          <Text>一周</Text>
         </View>
         <View
           className={`date-range-option ${dateRangePreset === "30" ? "active" : ""}`}
           onClick={() => handleDateRangePresetChange("30")}
         >
-          <Text>30天</Text>
+          <Text>一月</Text>
         </View>
         <View
-          className={`date-range-option ${dateRangePreset === "90" ? "active" : ""}`}
-          onClick={() => handleDateRangePresetChange("90")}
+          className={`date-range-option ${dateRangePreset === "365" ? "active" : ""}`}
+          onClick={() => handleDateRangePresetChange("365")}
         >
-          <Text>90天</Text>
+          <Text>一年</Text>
         </View>
         <View
           className={`date-range-option ${dateRangePreset === "custom" ? "active" : ""}`}
