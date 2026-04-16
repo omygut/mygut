@@ -14,12 +14,12 @@
 }
 
 .nav-bar-back {
-  padding: 8px;
-  margin-left: -8px;
+  padding: 16px 24px;
+  margin-left: -24px;
 }
 
 .nav-bar-back-icon {
-  font-size: 44px;
+  font-size: 40px;
   color: #333;
   line-height: 1;
 }

@@ -1,27 +1,136 @@
 import { View, Text, Image } from "@tarojs/components";
+import Taro, { useDidShow, usePullDownRefresh } from "@tarojs/taro";
+import { useState, useCallback, useEffect } from "react";
+import { symptomService } from "../../services/symptom";
+import { mealService } from "../../services/meal";
+import { stoolService } from "../../services/stool";
+import { medicationService } from "../../services/medication";
+import { labTestService } from "../../services/labtest";
+import { examService } from "../../services/exam";
+import { formatDate, getPrevDate, getNextDate, getWeekday } from "../../utils/date";
+import RecordItem, { AnyRecord } from "../../components/RecordItem";
+import CalendarPopup from "../../components/CalendarPopup";
+import type { RecordType } from "../../types";
+import { RECORD_TYPE_OPTIONS } from "../../types";
 import logoImg from "../../assets/logo.png";
-import Taro from "@tarojs/taro";
-import { useState, useEffect } from "react";
 import "./index.css";
+
+interface RecordGroup {
+  type: RecordType;
+  icon: string;
+  title: string;
+  addPath: string;
+  records: AnyRecord[];
+}
+
+const COLLAPSED_STATE_KEY = "record_card_collapsed";
+
+function getCollapsedState(): Record<RecordType, boolean> {
+  const stored = Taro.getStorageSync(COLLAPSED_STATE_KEY);
+  return stored || {};
+}
+
+function saveCollapsedState(state: Record<RecordType, boolean>) {
+  Taro.setStorageSync(COLLAPSED_STATE_KEY, state);
+}
 
 export default function Index() {
   const [navHeight, setNavHeight] = useState({ statusBarHeight: 0, navBarHeight: 44 });
+  const [currentDate, setCurrentDate] = useState(formatDate());
+  const [loading, setLoading] = useState(true);
+  const [calendarVisible, setCalendarVisible] = useState(false);
+  const [recordGroups, setRecordGroups] = useState<RecordGroup[]>([]);
+  const [collapsedState, setCollapsedState] =
+    useState<Record<RecordType, boolean>>(getCollapsedState);
 
   useEffect(() => {
     const systemInfo = Taro.getSystemInfoSync();
     const menuButton = Taro.getMenuButtonBoundingClientRect();
     const statusBarHeight = systemInfo.statusBarHeight || 0;
-    // 导航栏高度 = 胶囊按钮高度 + 上下间距
     const navBarHeight = menuButton.height + (menuButton.top - statusBarHeight) * 2;
     setNavHeight({ statusBarHeight, navBarHeight });
   }, []);
 
-  const handleNavigate = (path: string) => {
-    Taro.navigateTo({ url: path });
+  const loadData = useCallback(async (date: string) => {
+    setLoading(true);
+    try {
+      const [symptoms, medications, meals, stools, labTests, exams] = await Promise.all([
+        symptomService.getByDate(date),
+        medicationService.getByDate(date),
+        mealService.getByDate(date),
+        stoolService.getByDate(date),
+        labTestService.getByDate(date),
+        examService.getByDate(date),
+      ]);
+
+      const recordsMap: Record<RecordType, AnyRecord[]> = {
+        symptom: symptoms.map((r) => ({ ...r, _type: "symptom" as const })),
+        medication: medications.map((r) => ({ ...r, _type: "medication" as const })),
+        meal: meals.map((r) => ({ ...r, _type: "meal" as const })),
+        stool: stools.map((r) => ({ ...r, _type: "stool" as const })),
+        labtest: labTests.map((r) => ({ ...r, _type: "labtest" as const })),
+        exam: exams.map((r) => ({ ...r, _type: "exam" as const })),
+      };
+
+      setRecordGroups(
+        RECORD_TYPE_OPTIONS.map((opt) => ({
+          type: opt.value,
+          icon: opt.icon,
+          title: opt.label,
+          addPath: opt.addPath,
+          records: recordsMap[opt.value],
+        })),
+      );
+    } catch (error) {
+      console.error("加载数据失败:", error);
+      Taro.showToast({ title: "加载失败", icon: "none" });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useDidShow(() => {
+    if (recordGroups.length === 0) {
+      loadData(currentDate);
+    }
+  });
+
+  usePullDownRefresh(async () => {
+    await loadData(currentDate);
+    Taro.stopPullDownRefresh();
+  });
+
+  const handlePrevDate = () => {
+    const newDate = getPrevDate(currentDate);
+    setCurrentDate(newDate);
+    loadData(newDate);
   };
 
+  const today = formatDate();
+  const isToday = currentDate === today;
+
+  const handleNextDate = () => {
+    if (isToday) return;
+    const newDate = getNextDate(currentDate);
+    setCurrentDate(newDate);
+    loadData(newDate);
+  };
+
+  const handleDateChange = (newDate: string) => {
+    setCurrentDate(newDate);
+    loadData(newDate);
+  };
+
+  const toggleCollapsed = (type: RecordType) => {
+    const newState = { ...collapsedState, [type]: !collapsedState[type] };
+    setCollapsedState(newState);
+    saveCollapsedState(newState);
+  };
+
+  const totalHeaderHeight = navHeight.statusBarHeight + navHeight.navBarHeight;
+
   return (
-    <View className="home-page">
+    <View className="index-page" style={{ paddingTop: `${totalHeaderHeight}px` }}>
       <View
         className="top-header"
         style={{
@@ -33,38 +142,65 @@ export default function Index() {
         <Text className="app-title">MyGut - 肠道健康记录</Text>
       </View>
 
-      <View className="quick-actions">
-        <Text className="section-title">快速记录</Text>
-        <View className="action-grid">
-          <View className="action-item" onClick={() => handleNavigate("/pages/symptom/add/index")}>
-            <Text className="action-icon">🌱</Text>
-            <Text className="action-label">体感</Text>
-          </View>
-          <View
-            className="action-item"
-            onClick={() => handleNavigate("/pages/medication/add/index")}
-          >
-            <Text className="action-icon">💊</Text>
-            <Text className="action-label">用药</Text>
-          </View>
-          <View className="action-item" onClick={() => handleNavigate("/pages/meal/add/index")}>
-            <Text className="action-icon">🍱</Text>
-            <Text className="action-label">饮食</Text>
-          </View>
-          <View className="action-item" onClick={() => handleNavigate("/pages/stool/add/index")}>
-            <Text className="action-icon">💩</Text>
-            <Text className="action-label">排便</Text>
-          </View>
-          <View className="action-item" onClick={() => handleNavigate("/pages/labtest/add/index")}>
-            <Text className="action-icon">🧪</Text>
-            <Text className="action-label">化验</Text>
-          </View>
-          <View className="action-item" onClick={() => handleNavigate("/pages/exam/add/index")}>
-            <Text className="action-icon">🩺</Text>
-            <Text className="action-label">检查</Text>
-          </View>
-        </View>
+      {/* 日期选择器 */}
+      <View className="date-selector">
+        <Text className="date-arrow" onClick={handlePrevDate}>
+          ◀
+        </Text>
+        <Text className="date-text" onClick={() => setCalendarVisible(true)}>
+          {currentDate} {getWeekday(currentDate)}
+        </Text>
+        <Text className={`date-arrow ${isToday ? "disabled" : ""}`} onClick={handleNextDate}>
+          ▶
+        </Text>
       </View>
+
+      <CalendarPopup
+        visible={calendarVisible}
+        value={currentDate}
+        onChange={handleDateChange}
+        onClose={() => setCalendarVisible(false)}
+      />
+
+      {loading ? (
+        <View className="loading">加载中...</View>
+      ) : (
+        <View className="records-container">
+          {recordGroups.map((group) => {
+            const isCollapsed = collapsedState[group.type];
+            return (
+              <View key={group.type} className="record-card">
+                <View className="card-header" onClick={() => toggleCollapsed(group.type)}>
+                  <View className="card-title-row">
+                    <Text className={`card-arrow ${isCollapsed ? "collapsed" : ""}`}>▼</Text>
+                    <Text className="card-icon">{group.icon}</Text>
+                    <Text className="card-title">{group.title}</Text>
+                    <Text className="card-count">[{group.records.length}条]</Text>
+                  </View>
+                  <Text
+                    className="card-add-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      Taro.navigateTo({ url: group.addPath });
+                    }}
+                  >
+                    ＋
+                  </Text>
+                </View>
+                {!isCollapsed && (
+                  <View className="card-content">
+                    {group.records.length === 0 ? (
+                      <Text className="empty-hint">暂无记录</Text>
+                    ) : (
+                      group.records.map((record) => <RecordItem key={record._id} record={record} />)
+                    )}
+                  </View>
+                )}
+              </View>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }
