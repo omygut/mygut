@@ -1,6 +1,6 @@
 import { View, Text, ScrollView } from "@tarojs/components";
 import Taro, { useDidShow } from "@tarojs/taro";
-import { useState, useCallback, useRef, useMemo } from "react";
+import { useState, useCallback, useRef } from "react";
 import { symptomService } from "../../services/symptom";
 import { mealService } from "../../services/meal";
 import { stoolService } from "../../services/stool";
@@ -50,6 +50,8 @@ export default function History() {
   const [customEndDate, setCustomEndDate] = useState(() => formatDate());
   const [startCalendarVisible, setStartCalendarVisible] = useState(false);
   const [endCalendarVisible, setEndCalendarVisible] = useState(false);
+  const [statsData, setStatsData] = useState<{ date: string; value: number }[]>([]);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   const cursorRef = useRef({ date: "9999-12-31", time: "23:59" });
   const dateRangeRef = useRef({ startDate: "", endDate: "" });
@@ -143,9 +145,34 @@ export default function History() {
     loadInitial(type, startDate, endDate);
   };
 
+  const loadStatsData = useCallback(async (startDate: string, endDate: string) => {
+    setStatsLoading(true);
+    try {
+      const data = await stoolService.getByDateRange(startDate, endDate);
+      // 按日期统计次数
+      const counts = new Map<string, number>();
+      data.forEach((record) => {
+        counts.set(record.date, (counts.get(record.date) || 0) + 1);
+      });
+      const result = Array.from(counts.entries())
+        .map(([date, value]) => ({ date, value }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      setStatsData(result);
+    } catch (error) {
+      console.error("加载统计数据失败:", error);
+      Taro.showToast({ title: "加载失败", icon: "none" });
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
   const handleViewModeChange = (mode: ViewMode) => {
     if (mode === viewMode) return;
     setViewMode(mode);
+    if (mode === "stats") {
+      const { startDate, endDate } = getEffectiveDateRange();
+      loadStatsData(startDate, endDate);
+    }
   };
 
   const handleDateRangePresetChange = (preset: DateRangePreset) => {
@@ -158,12 +185,18 @@ export default function History() {
       setCustomEndDate(endDate);
       setRecords([]);
       loadInitial(selectedType, startDate, endDate);
+      if (selectedType === "stool" && viewMode === "stats") {
+        loadStatsData(startDate, endDate);
+      }
     }
   };
 
   const handleCustomDateChange = (start: string, end: string) => {
     setRecords([]);
     loadInitial(selectedType, start, end);
+    if (selectedType === "stool" && viewMode === "stats") {
+      loadStatsData(start, end);
+    }
   };
 
   // 按日期分组记录
@@ -179,17 +212,6 @@ export default function History() {
 
   const { startDate: effectiveStartDate, endDate: effectiveEndDate } = getEffectiveDateRange();
 
-  // 计算每天的排便次数
-  const dailyCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    records.forEach((record) => {
-      counts.set(record.date, (counts.get(record.date) || 0) + 1);
-    });
-    return Array.from(counts.entries())
-      .map(([date, value]) => ({ date, value }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }, [records]);
-
   const renderStatsView = () => (
     <View className="stats-view">
       <View className="stats-header">
@@ -199,16 +221,16 @@ export default function History() {
         </Text>
       </View>
       <View className="stats-chart-container">
-        {loading ? (
+        {statsLoading ? (
           <View className="stats-loading">
             <Text>加载中...</Text>
           </View>
-        ) : dailyCounts.length === 0 ? (
+        ) : statsData.length === 0 ? (
           <View className="stats-empty">
             <Text>暂无数据</Text>
           </View>
         ) : (
-          <BarChart data={dailyCounts} />
+          <BarChart data={statsData} />
         )}
       </View>
     </View>
