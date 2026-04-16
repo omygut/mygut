@@ -2,7 +2,6 @@ export default defineAppConfig({
   lazyCodeLoading: "requiredComponents",
   pages: [
     "pages/index/index",
-    "pages/records/index",
     "pages/history/index",
     "pages/settings/index",
     "pages/symptom/add/index",
@@ -29,10 +28,6 @@ export default defineAppConfig({
       {
         pagePath: "pages/index/index",
         text: "🏠 首页",
-      },
-      {
-        pagePath: "pages/records/index",
-        text: "📅 记录",
       },
       {
         pagePath: "pages/history/index",
