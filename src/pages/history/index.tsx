@@ -10,6 +10,7 @@ import { examService } from "../../services/exam";
 import { formatDisplayDate, getWeekday, formatDate } from "../../utils/date";
 import RecordItem, { AnyRecord } from "../../components/RecordItem";
 import CalendarPopup from "../../components/CalendarPopup";
+import BarChart from "../../components/BarChart";
 import { RecordType, RECORD_TYPE_OPTIONS } from "../../types";
 import "./index.css";
 
@@ -49,6 +50,8 @@ export default function History() {
   const [customEndDate, setCustomEndDate] = useState(() => formatDate());
   const [startCalendarVisible, setStartCalendarVisible] = useState(false);
   const [endCalendarVisible, setEndCalendarVisible] = useState(false);
+  const [statsData, setStatsData] = useState<{ date: string; value: number }[]>([]);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   const cursorRef = useRef({ date: "9999-12-31", time: "23:59" });
   const dateRangeRef = useRef({ startDate: "", endDate: "" });
@@ -142,9 +145,30 @@ export default function History() {
     loadInitial(type, startDate, endDate);
   };
 
+  const loadStatsData = useCallback(async (startDate: string, endDate: string) => {
+    setStatsLoading(true);
+    try {
+      const res = await Taro.cloud.callFunction({
+        name: "stool-stats",
+        data: { startDate, endDate },
+      });
+      const result = res.result as { data: { date: string; value: number }[] };
+      setStatsData(result.data || []);
+    } catch (error) {
+      console.error("加载统计数据失败:", error);
+      Taro.showToast({ title: "加载失败", icon: "none" });
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
   const handleViewModeChange = (mode: ViewMode) => {
     if (mode === viewMode) return;
     setViewMode(mode);
+    if (mode === "stats") {
+      const { startDate, endDate } = getEffectiveDateRange();
+      loadStatsData(startDate, endDate);
+    }
   };
 
   const handleDateRangePresetChange = (preset: DateRangePreset) => {
@@ -157,12 +181,18 @@ export default function History() {
       setCustomEndDate(endDate);
       setRecords([]);
       loadInitial(selectedType, startDate, endDate);
+      if (selectedType === "stool" && viewMode === "stats") {
+        loadStatsData(startDate, endDate);
+      }
     }
   };
 
   const handleCustomDateChange = (start: string, end: string) => {
     setRecords([]);
     loadInitial(selectedType, start, end);
+    if (selectedType === "stool" && viewMode === "stats") {
+      loadStatsData(start, end);
+    }
   };
 
   // 按日期分组记录
@@ -180,11 +210,24 @@ export default function History() {
 
   const renderStatsView = () => (
     <View className="stats-view">
-      <View className="stats-chart-placeholder">
-        <Text className="placeholder-text">
+      <View className="stats-header">
+        <Text className="stats-title">每日排便次数</Text>
+        <Text className="stats-range">
           {effectiveStartDate} ~ {effectiveEndDate}
         </Text>
-        <Text className="placeholder-text">图表开发中...</Text>
+      </View>
+      <View className="stats-chart-container">
+        {statsLoading ? (
+          <View className="stats-loading">
+            <Text>加载中...</Text>
+          </View>
+        ) : statsData.length === 0 ? (
+          <View className="stats-empty">
+            <Text>暂无数据</Text>
+          </View>
+        ) : (
+          <BarChart data={statsData} />
+        )}
       </View>
     </View>
   );
