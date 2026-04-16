@@ -85,4 +85,92 @@ describe("stool service", () => {
       expect(afterRecords.length).toBe(countBefore - 1);
     });
   });
+
+  describe("getByDateRange", () => {
+    it("should return records within date range ordered by date desc", async () => {
+      await stoolService.add({ date: "2026-04-01", time: "08:00", type: 4, amount: 2 });
+      await stoolService.add({ date: "2026-04-05", time: "09:00", type: 3, amount: 3 });
+      await stoolService.add({ date: "2026-04-10", time: "10:00", type: 5, amount: 2 });
+
+      const records = await stoolService.getByDateRange("2026-04-01", "2026-04-10");
+
+      expect(records.length).toBeGreaterThanOrEqual(3);
+      // Verify order is date desc
+      for (let i = 0; i < records.length - 1; i++) {
+        expect(records[i].date >= records[i + 1].date).toBe(true);
+      }
+    });
+
+    it("should return empty array when no records in range", async () => {
+      const records = await stoolService.getByDateRange("2099-01-01", "2099-12-31");
+      expect(records).toEqual([]);
+    });
+
+    it("should include records on boundary dates", async () => {
+      const startDate = "2026-05-01";
+      const endDate = "2026-05-03";
+
+      await stoolService.add({ date: startDate, time: "08:00", type: 4, amount: 2 });
+      await stoolService.add({ date: "2026-05-02", time: "09:00", type: 4, amount: 2 });
+      await stoolService.add({ date: endDate, time: "10:00", type: 4, amount: 2 });
+
+      const records = await stoolService.getByDateRange(startDate, endDate);
+
+      const dates = records.map((r) => r.date);
+      expect(dates).toContain(startDate);
+      expect(dates).toContain(endDate);
+    });
+  });
+
+  describe("getByDateRangeBefore", () => {
+    it("should return records within date range before cursor", async () => {
+      await stoolService.add({ date: "2026-06-01", time: "08:00", type: 4, amount: 2 });
+      await stoolService.add({ date: "2026-06-01", time: "12:00", type: 3, amount: 3 });
+      await stoolService.add({ date: "2026-06-02", time: "09:00", type: 5, amount: 2 });
+
+      // Get records before 2026-06-01 12:00
+      const records = await stoolService.getByDateRangeBefore(
+        "2026-06-01",
+        "2026-06-02",
+        "2026-06-01",
+        "12:00",
+        10,
+      );
+
+      // Should only get the 08:00 record, not the 12:00 one
+      const times = records.filter((r) => r.date === "2026-06-01").map((r) => r.time);
+      expect(times).toContain("08:00");
+      expect(times).not.toContain("12:00");
+    });
+
+    it("should respect date range boundaries", async () => {
+      await stoolService.add({ date: "2026-06-10", time: "08:00", type: 4, amount: 2 });
+      await stoolService.add({ date: "2026-06-15", time: "09:00", type: 3, amount: 3 });
+      await stoolService.add({ date: "2026-06-20", time: "10:00", type: 5, amount: 2 });
+
+      const records = await stoolService.getByDateRangeBefore(
+        "2026-06-10",
+        "2026-06-15",
+        "9999-12-31",
+        "23:59",
+        10,
+      );
+
+      const dates = records.map((r) => r.date);
+      expect(dates).toContain("2026-06-10");
+      expect(dates).toContain("2026-06-15");
+      expect(dates).not.toContain("2026-06-20");
+    });
+
+    it("should return empty array when no records match", async () => {
+      const records = await stoolService.getByDateRangeBefore(
+        "2099-01-01",
+        "2099-12-31",
+        "9999-12-31",
+        "23:59",
+        10,
+      );
+      expect(records).toEqual([]);
+    });
+  });
 });

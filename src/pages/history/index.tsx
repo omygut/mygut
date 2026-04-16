@@ -7,10 +7,14 @@ import { stoolService } from "../../services/stool";
 import { medicationService } from "../../services/medication";
 import { labTestService } from "../../services/labtest";
 import { examService } from "../../services/exam";
-import { formatDisplayDate, getWeekday } from "../../utils/date";
+import { formatDisplayDate, getWeekday, formatDate } from "../../utils/date";
 import RecordItem, { AnyRecord } from "../../components/RecordItem";
+import CalendarPopup from "../../components/CalendarPopup";
 import { RecordType, RECORD_TYPE_OPTIONS } from "../../types";
 import "./index.css";
+
+type ViewMode = "records" | "stats";
+type DateRangePreset = "7" | "30" | "365" | "custom";
 
 const PAGE_SIZE = 50;
 
@@ -23,6 +27,12 @@ const services = {
   exam: examService,
 } as const;
 
+function getDateDaysAgo(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() - days + 1);
+  return formatDate(date);
+}
+
 export default function History() {
   const [selectedType, setSelectedType] = useState<RecordType>(() => {
     return Taro.getStorageSync("history_selected_type") || "meal";
@@ -32,13 +42,28 @@ export default function History() {
   const [records, setRecords] = useState<AnyRecord[]>([]);
   const [hasMore, setHasMore] = useState(true);
 
-  const cursorRef = useRef({ date: "9999-12-31", time: "23:59" });
+  // Stats view state
+  const [viewMode, setViewMode] = useState<ViewMode>("records");
+  const [dateRangePreset, setDateRangePreset] = useState<DateRangePreset>("7");
+  const [customStartDate, setCustomStartDate] = useState(() => getDateDaysAgo(7));
+  const [customEndDate, setCustomEndDate] = useState(() => formatDate());
+  const [startCalendarVisible, setStartCalendarVisible] = useState(false);
+  const [endCalendarVisible, setEndCalendarVisible] = useState(false);
 
-  const loadMore = useCallback(async (type: RecordType, isInitial = false) => {
+  const cursorRef = useRef({ date: "9999-12-31", time: "23:59" });
+  const dateRangeRef = useRef({ startDate: "", endDate: "" });
+
+  const loadMore = useCallback(async (type: RecordType, startDate: string, endDate: string) => {
     const service = services[type];
     const cursor = cursorRef.current;
 
-    const data = await service.getRecentBefore(cursor.date, cursor.time, PAGE_SIZE);
+    const data = await service.getByDateRangeBefore(
+      startDate,
+      endDate,
+      cursor.date,
+      cursor.time,
+      PAGE_SIZE,
+    );
 
     if (data.length < PAGE_SIZE) {
       setHasMore(false);
@@ -53,13 +78,14 @@ export default function History() {
   }, []);
 
   const loadInitial = useCallback(
-    async (type: RecordType) => {
+    async (type: RecordType, startDate: string, endDate: string) => {
       setLoading(true);
       setHasMore(true);
       cursorRef.current = { date: "9999-12-31", time: "23:59" };
+      dateRangeRef.current = { startDate, endDate };
 
       try {
-        const newRecords = await loadMore(type, true);
+        const newRecords = await loadMore(type, startDate, endDate);
         setRecords(newRecords);
       } catch (error) {
         console.error("加载数据失败:", error);
@@ -76,7 +102,8 @@ export default function History() {
 
     setLoadingMore(true);
     try {
-      const newRecords = await loadMore(selectedType);
+      const { startDate, endDate } = dateRangeRef.current;
+      const newRecords = await loadMore(selectedType, startDate, endDate);
       if (newRecords.length > 0) {
         setRecords((prev) => [...prev, ...newRecords]);
       }
@@ -87,22 +114,55 @@ export default function History() {
     }
   }, [loadMore, selectedType, loadingMore, hasMore]);
 
-  useDidShow(() => {
-    if (records.length === 0) {
-      loadInitial(selectedType);
+  const getEffectiveDateRange = useCallback(() => {
+    if (dateRangePreset === "custom") {
+      return { startDate: customStartDate, endDate: customEndDate };
     }
+    const days = parseInt(dateRangePreset, 10);
+    return { startDate: getDateDaysAgo(days), endDate: formatDate() };
+  }, [dateRangePreset, customStartDate, customEndDate]);
+
+  useDidShow(() => {
+    const { startDate, endDate } = getEffectiveDateRange();
+    loadInitial(selectedType, startDate, endDate);
   });
 
   const handleRefresh = useCallback(async () => {
-    await loadInitial(selectedType);
-  }, [loadInitial, selectedType]);
+    const { startDate, endDate } = getEffectiveDateRange();
+    await loadInitial(selectedType, startDate, endDate);
+  }, [loadInitial, selectedType, getEffectiveDateRange]);
 
   const handleTypeChange = (type: RecordType) => {
     if (type === selectedType) return;
     setSelectedType(type);
     Taro.setStorageSync("history_selected_type", type);
     setRecords([]);
-    loadInitial(type);
+    setViewMode("records");
+    const { startDate, endDate } = getEffectiveDateRange();
+    loadInitial(type, startDate, endDate);
+  };
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    if (mode === viewMode) return;
+    setViewMode(mode);
+  };
+
+  const handleDateRangePresetChange = (preset: DateRangePreset) => {
+    setDateRangePreset(preset);
+    if (preset !== "custom") {
+      const days = parseInt(preset, 10);
+      const startDate = getDateDaysAgo(days);
+      const endDate = formatDate();
+      setCustomStartDate(startDate);
+      setCustomEndDate(endDate);
+      setRecords([]);
+      loadInitial(selectedType, startDate, endDate);
+    }
+  };
+
+  const handleCustomDateChange = (start: string, end: string) => {
+    setRecords([]);
+    loadInitial(selectedType, start, end);
   };
 
   // 按日期分组记录
@@ -116,12 +176,92 @@ export default function History() {
     groupedRecords[groupedRecords.length - 1].records.push(record);
   });
 
+  const { startDate: effectiveStartDate, endDate: effectiveEndDate } = getEffectiveDateRange();
+
+  const renderStatsView = () => (
+    <View className="stats-view">
+      <View className="stats-chart-placeholder">
+        <Text className="placeholder-text">
+          {effectiveStartDate} ~ {effectiveEndDate}
+        </Text>
+        <Text className="placeholder-text">图表开发中...</Text>
+      </View>
+    </View>
+  );
+
   return (
     <View className="history-page">
-      <View className="type-filter">
+      <View className="date-range-selector">
+        <View
+          className={`date-range-option ${dateRangePreset === "7" ? "active" : ""}`}
+          onClick={() => handleDateRangePresetChange("7")}
+        >
+          <Text>一周</Text>
+        </View>
+        <View
+          className={`date-range-option ${dateRangePreset === "30" ? "active" : ""}`}
+          onClick={() => handleDateRangePresetChange("30")}
+        >
+          <Text>一月</Text>
+        </View>
+        <View
+          className={`date-range-option ${dateRangePreset === "365" ? "active" : ""}`}
+          onClick={() => handleDateRangePresetChange("365")}
+        >
+          <Text>一年</Text>
+        </View>
+        <View
+          className={`date-range-option ${dateRangePreset === "custom" ? "active" : ""}`}
+          onClick={() => handleDateRangePresetChange("custom")}
+        >
+          <Text>自定义</Text>
+        </View>
+      </View>
+
+      {dateRangePreset === "custom" && (
+        <View className="custom-date-range">
+          <View className="date-picker" onClick={() => setStartCalendarVisible(true)}>
+            <Text>{customStartDate}</Text>
+          </View>
+          <Text className="date-range-separator">至</Text>
+          <View className="date-picker" onClick={() => setEndCalendarVisible(true)}>
+            <Text>{customEndDate}</Text>
+          </View>
+        </View>
+      )}
+
+      <CalendarPopup
+        visible={startCalendarVisible}
+        value={customStartDate}
+        onChange={(date) => {
+          const newEndDate = date > customEndDate ? date : customEndDate;
+          setCustomStartDate(date);
+          if (date > customEndDate) {
+            setCustomEndDate(date);
+          }
+          handleCustomDateChange(date, newEndDate);
+        }}
+        onClose={() => setStartCalendarVisible(false)}
+      />
+      <CalendarPopup
+        visible={endCalendarVisible}
+        value={customEndDate}
+        onChange={(date) => {
+          const newStartDate = date < customStartDate ? date : customStartDate;
+          setCustomEndDate(date);
+          if (date < customStartDate) {
+            setCustomStartDate(date);
+          }
+          handleCustomDateChange(newStartDate, date);
+        }}
+        onClose={() => setEndCalendarVisible(false)}
+      />
+
+      <ScrollView className="type-filter" scrollX scrollIntoView={`type-${selectedType}`}>
         {RECORD_TYPE_OPTIONS.map((option) => (
           <View
             key={option.value}
+            id={`type-${option.value}`}
             className={`type-option ${selectedType === option.value ? "active" : ""}`}
             onClick={() => handleTypeChange(option.value)}
           >
@@ -129,9 +269,28 @@ export default function History() {
             <Text className="type-label">{option.label}</Text>
           </View>
         ))}
-      </View>
+      </ScrollView>
 
-      {loading ? (
+      {selectedType === "stool" && (
+        <View className="view-mode-tabs">
+          <View
+            className={`view-mode-tab ${viewMode === "records" ? "active" : ""}`}
+            onClick={() => handleViewModeChange("records")}
+          >
+            <Text>记录</Text>
+          </View>
+          <View
+            className={`view-mode-tab ${viewMode === "stats" ? "active" : ""}`}
+            onClick={() => handleViewModeChange("stats")}
+          >
+            <Text>统计</Text>
+          </View>
+        </View>
+      )}
+
+      {selectedType === "stool" && viewMode === "stats" ? (
+        renderStatsView()
+      ) : loading ? (
         <View className="loading">加载中...</View>
       ) : records.length === 0 ? (
         <View className="empty">
