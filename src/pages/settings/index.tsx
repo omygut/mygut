@@ -1,56 +1,18 @@
-import { View, Text, Image, Button } from "@tarojs/components";
-import Taro, { useDidShow } from "@tarojs/taro";
-import { useState, useCallback } from "react";
-import { getUserSettings, getDefaultNickname } from "../../services/user";
+import { View, Text, Button } from "@tarojs/components";
+import Taro from "@tarojs/taro";
+import { useState } from "react";
 import { saveExportToFile } from "../../services/export";
 import { confirmAndDeleteAllData } from "../../services/deleteAll";
-import ProfilePopup from "../../components/ProfilePopup";
 import "./index.css";
 
 declare const APP_VERSION: string;
 declare const APP_NAME: string;
 
 export default function Settings() {
-  const [userSettings, setUserSettings] = useState<{
-    _id: string;
-    nickname?: string;
-    avatar?: string;
-  } | null>(null);
-  const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [devModeEnabled, setDevModeEnabled] = useState(false);
   const [devModeExpanded, setDevModeExpanded] = useState(false);
   const [tapCount, setTapCount] = useState(0);
   const [lastTapTime, setLastTapTime] = useState(0);
-
-  const loadUserSettings = useCallback(async () => {
-    try {
-      const settings = await getUserSettings();
-      setUserSettings(settings);
-    } catch (error) {
-      console.error("加载用户设置失败:", error);
-    }
-  }, []);
-
-  useDidShow(() => {
-    loadUserSettings();
-  });
-
-  const handleProfileClick = () => {
-    setShowProfilePopup(true);
-  };
-
-  const handleProfileClose = () => {
-    setShowProfilePopup(false);
-  };
-
-  const handleProfileSave = (data: { nickname: string; avatar?: string }) => {
-    setUserSettings((prev) => (prev ? { ...prev, ...data } : prev));
-    setShowProfilePopup(false);
-  };
-
-  const displayNickname =
-    userSettings?.nickname ||
-    (userSettings?._id ? getDefaultNickname(userSettings._id) : "加载中...");
 
   const handleAppNameTap = () => {
     const now = Date.now();
@@ -70,28 +32,19 @@ export default function Settings() {
 
   return (
     <View className="settings-page">
-      <View className="profile-section" onClick={handleProfileClick}>
-        <View className="profile-avatar">
-          {userSettings?.avatar ? (
-            <Image className="avatar-img" src={userSettings.avatar} mode="aspectFill" />
-          ) : (
-            <View className="avatar-default" />
-          )}
+      <View className="data-section">
+        <Text className="section-title">数据管理</Text>
+        <View className="data-item" onClick={saveExportToFile}>
+          <Text className="data-label">导出数据</Text>
+          <Text className="data-arrow">›</Text>
         </View>
-        <View className="profile-info">
-          <Text className="profile-nickname">{displayNickname}</Text>
-          <Text className="profile-hint">点击编辑个人资料</Text>
+        <Text className="data-hint">导出所有历史记录为 JSON 文件</Text>
+        <View className="data-item" onClick={confirmAndDeleteAllData}>
+          <Text className="data-label data-label-danger">删除全部数据</Text>
+          <Text className="data-arrow">›</Text>
         </View>
-        <Text className="profile-arrow">›</Text>
+        <Text className="data-hint">删除后数据无法恢复</Text>
       </View>
-
-      <ProfilePopup
-        visible={showProfilePopup}
-        nickname={displayNickname}
-        avatar={userSettings?.avatar}
-        onClose={handleProfileClose}
-        onSave={handleProfileSave}
-      />
 
       <View className="about-section">
         <Text className="section-title">关于</Text>
@@ -110,20 +63,6 @@ export default function Settings() {
           <Text className="about-label">隐私政策</Text>
           <Text className="about-arrow">›</Text>
         </View>
-      </View>
-
-      <View className="data-section">
-        <Text className="section-title">数据管理</Text>
-        <View className="data-item" onClick={saveExportToFile}>
-          <Text className="data-label">导出数据</Text>
-          <Text className="data-arrow">›</Text>
-        </View>
-        <Text className="data-hint">导出所有历史记录为 JSON 文件</Text>
-        <View className="data-item" onClick={confirmAndDeleteAllData}>
-          <Text className="data-label data-label-danger">删除全部数据</Text>
-          <Text className="data-arrow">›</Text>
-        </View>
-        <Text className="data-hint">删除后数据无法恢复</Text>
       </View>
 
       {devModeEnabled && (
