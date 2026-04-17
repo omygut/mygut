@@ -89,8 +89,20 @@ export default function Index() {
     }
   }, []);
 
+  useEffect(() => {
+    const handleRecordChange = () => {
+      loadData(currentDate);
+    };
+    Taro.eventCenter.on("recordChange", handleRecordChange);
+    return () => {
+      Taro.eventCenter.off("recordChange", handleRecordChange);
+    };
+  }, [currentDate, loadData]);
+
   useDidShow(() => {
-    loadData(currentDate);
+    if (recordGroups.length === 0) {
+      loadData(currentDate);
+    }
   });
 
   usePullDownRefresh(async () => {
