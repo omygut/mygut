@@ -57,7 +57,9 @@ export default function History() {
   // Stats view state
   const [stoolViewTab, setStoolViewTab] = useState<StoolViewTab>("score");
   const [labtestViewTab, setLabtestViewTab] = useState<LabtestViewTab>("chart");
-  const [dateRangePreset, setDateRangePreset] = useState<DateRangePreset>("7");
+  const [dateRangePreset, setDateRangePreset] = useState<DateRangePreset>(() => {
+    return Taro.getStorageSync("history_date_range_preset") || "7";
+  });
   const [customStartDate, setCustomStartDate] = useState(() => getDateDaysAgo(7));
   const [customEndDate, setCustomEndDate] = useState(() => formatDate());
   const [startCalendarVisible, setStartCalendarVisible] = useState(false);
@@ -253,10 +255,16 @@ export default function History() {
 
   const handleDateRangePresetChange = (preset: DateRangePreset) => {
     setDateRangePreset(preset);
+    Taro.setStorageSync("history_date_range_preset", preset);
     if (preset !== "custom") {
-      const days = parseInt(preset, 10);
-      const startDate = getDateDaysAgo(days);
+      let startDate: string;
       const endDate = formatDate();
+      if (preset === "all") {
+        startDate = "1900-01-01";
+      } else {
+        const days = parseInt(preset, 10);
+        startDate = getDateDaysAgo(days);
+      }
       setCustomStartDate(startDate);
       setCustomEndDate(endDate);
       setRecords([]);
