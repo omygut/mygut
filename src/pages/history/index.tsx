@@ -26,7 +26,7 @@ const FCP_INDICATOR = {
 
 type StoolViewTab = "score" | "count" | "records";
 type LabtestViewTab = "chart" | "records";
-type DateRangePreset = "7" | "30" | "365" | "custom";
+type DateRangePreset = "7" | "30" | "365" | "1095" | "custom";
 
 const PAGE_SIZE = 50;
 
@@ -406,6 +406,12 @@ export default function History() {
           onClick={() => handleDateRangePresetChange("365")}
         >
           <Text>一年</Text>
+        </View>
+        <View
+          className={`date-range-option ${dateRangePreset === "1095" ? "active" : ""}`}
+          onClick={() => handleDateRangePresetChange("1095")}
+        >
+          <Text>三年</Text>
         </View>
         <View
           className={`date-range-option ${dateRangePreset === "custom" ? "active" : ""}`}
