@@ -48,13 +48,13 @@ export default function Settings() {
 
       <View className="about-section">
         <Text className="section-title">关于</Text>
-        <View className="about-item">
-          <Text className="about-label">版本</Text>
-          <Text className="about-value">{APP_VERSION}</Text>
-        </View>
         <View className="about-item" onClick={handleAppNameTap}>
           <Text className="about-label">名称</Text>
           <Text className="about-value">{APP_NAME}</Text>
+        </View>
+        <View className="about-item">
+          <Text className="about-label">版本</Text>
+          <Text className="about-value">{APP_VERSION}</Text>
         </View>
         <View
           className="about-item"
