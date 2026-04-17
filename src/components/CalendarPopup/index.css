@@ -13,24 +13,8 @@
   background-color: #fff;
   border-radius: 24px 24px 0 0;
   padding: 24px;
-  padding-bottom: calc(24px + env(safe-area-inset-bottom));
-}
-
-.calendar-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.calendar-btn {
-  font-size: 28px;
-  color: #999;
-  padding: 8px 16px;
-}
-
-.calendar-btn.confirm {
-  color: #5fcf9a;
+  padding-top: 32px;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .calendar-header {
@@ -38,6 +22,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  padding: 0 24px;
 }
 
 .calendar-nav {
@@ -52,7 +37,6 @@
 
 .calendar-title {
   font-size: 32px;
-  font-weight: 600;
   color: #333;
 }
 
@@ -82,9 +66,9 @@
 }
 
 .day-text {
-  width: 64px;
-  height: 64px;
-  line-height: 64px;
+  width: 56px;
+  height: 56px;
+  line-height: 56px;
   text-align: center;
   font-size: 28px;
   color: #333;
