@@ -93,9 +93,10 @@ export default function Settings() {
         </View>
       )}
 
-      <View className="contact-section">
-        <Button className="contact-btn" openType="contact">
-          联系开发者
+      <View className="about-section">
+        <Button className="about-item contact-btn" openType="contact">
+          <Text className="about-label">联系开发者</Text>
+          <Text className="about-arrow">›</Text>
         </Button>
       </View>
 

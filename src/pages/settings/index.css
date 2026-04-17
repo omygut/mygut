@@ -80,19 +80,12 @@
 
 
 /* 联系客服 */
-.contact-section {
-  padding: 40px 32px;
-}
-
 .contact-btn {
-  width: 100%;
-  height: 88px;
-  line-height: 88px;
-  background-color: #5fcf9a;
-  color: #fff;
-  font-size: 32px;
-  border-radius: 12px;
+  background: transparent;
   border: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
 }
 
 /* 免责声明 */
