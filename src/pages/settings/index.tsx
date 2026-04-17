@@ -63,6 +63,10 @@ export default function Settings() {
           <Text className="about-label">隐私政策</Text>
           <Text className="about-arrow">›</Text>
         </View>
+        <Button className="about-item contact-btn" openType="contact">
+          <Text className="about-label">联系开发者</Text>
+          <Text className="about-arrow">›</Text>
+        </Button>
       </View>
 
       {devModeEnabled && (
@@ -92,13 +96,6 @@ export default function Settings() {
           )}
         </View>
       )}
-
-      <View className="about-section">
-        <Button className="about-item contact-btn" openType="contact">
-          <Text className="about-label">联系开发者</Text>
-          <Text className="about-arrow">›</Text>
-        </Button>
-      </View>
 
       <View className="disclaimer-section">
         <Text className="disclaimer-text">感谢「协你同心」群友们的支持与反馈</Text>
