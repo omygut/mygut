@@ -90,9 +90,7 @@ export default function Index() {
   }, []);
 
   useDidShow(() => {
-    if (recordGroups.length === 0) {
-      loadData(currentDate);
-    }
+    loadData(currentDate);
   });
 
   usePullDownRefresh(async () => {
