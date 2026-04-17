@@ -87,7 +87,7 @@ function drawChart(
   refMax?: number,
   events: ChartEvent[] = [],
 ): { event: ChartEvent; x: number }[] {
-  const padding = { top: 20, right: 16, bottom: 50, left: 50 };
+  const padding = { top: 30, right: 16, bottom: 50, left: 50 };
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
 
@@ -231,7 +231,7 @@ function drawChart(
     ctx.stroke();
 
     // Draw two-line label: date on top, description below
-    const date = eventGroup[0].date.slice(5); // MM-DD
+    const date = eventGroup[0].date.slice(2); // YY-MM-DD
     const label = eventGroup.map((e) => e.description).join(" / ");
     ctx.fillText(date, x, 2);
     ctx.fillText(label, x, 14);
