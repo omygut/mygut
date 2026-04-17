@@ -159,7 +159,7 @@ export default function History() {
       return { startDate: customStartDate, endDate: customEndDate };
     }
     if (dateRangePreset === "all") {
-      return { startDate: "1900-01-01", endDate: formatDate() };
+      return { startDate: "2000-01-01", endDate: formatDate() };
     }
     const days = parseInt(dateRangePreset, 10);
     return { startDate: getDateDaysAgo(days), endDate: formatDate() };
@@ -294,7 +294,7 @@ export default function History() {
       let startDate: string;
       const endDate = formatDate();
       if (preset === "all") {
-        startDate = "1900-01-01";
+        startDate = "2000-01-01";
       } else {
         const days = parseInt(preset, 10);
         startDate = getDateDaysAgo(days);
