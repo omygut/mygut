@@ -31,7 +31,7 @@ const DEFAULT_INDICATOR: StandardIndicator = {
 
 type StoolViewTab = "score" | "count" | "records";
 type LabtestViewTab = "chart" | "records";
-type DateRangePreset = "7" | "30" | "365" | "all" | "custom";
+type DateRangePreset = "30" | "90" | "365" | "1095" | "all" | "custom";
 
 const PAGE_SIZE = 50;
 
@@ -63,7 +63,10 @@ export default function History() {
   const [stoolViewTab, setStoolViewTab] = useState<StoolViewTab>("score");
   const [labtestViewTab, setLabtestViewTab] = useState<LabtestViewTab>("chart");
   const [dateRangePreset, setDateRangePreset] = useState<DateRangePreset>(() => {
-    return Taro.getStorageSync("history_date_range_preset") || "7";
+    const saved = Taro.getStorageSync("history_date_range_preset");
+    // Migrate old "7" preset to "30"
+    if (saved === "7") return "30";
+    return saved || "30";
   });
   const [customStartDate, setCustomStartDate] = useState(() => getDateDaysAgo(7));
   const [customEndDate, setCustomEndDate] = useState(() => formatDate());
@@ -555,22 +558,28 @@ export default function History() {
     <View className="history-page">
       <View className="date-range-selector">
         <View
-          className={`date-range-option ${dateRangePreset === "7" ? "active" : ""}`}
-          onClick={() => handleDateRangePresetChange("7")}
-        >
-          <Text>一周</Text>
-        </View>
-        <View
           className={`date-range-option ${dateRangePreset === "30" ? "active" : ""}`}
           onClick={() => handleDateRangePresetChange("30")}
         >
           <Text>一月</Text>
         </View>
         <View
+          className={`date-range-option ${dateRangePreset === "90" ? "active" : ""}`}
+          onClick={() => handleDateRangePresetChange("90")}
+        >
+          <Text>三月</Text>
+        </View>
+        <View
           className={`date-range-option ${dateRangePreset === "365" ? "active" : ""}`}
           onClick={() => handleDateRangePresetChange("365")}
         >
           <Text>一年</Text>
+        </View>
+        <View
+          className={`date-range-option ${dateRangePreset === "1095" ? "active" : ""}`}
+          onClick={() => handleDateRangePresetChange("1095")}
+        >
+          <Text>三年</Text>
         </View>
         <View
           className={`date-range-option ${dateRangePreset === "all" ? "active" : ""}`}
