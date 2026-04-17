@@ -145,6 +145,12 @@ export default function History() {
   useDidShow(() => {
     const { startDate, endDate } = getEffectiveDateRange();
     loadInitial(selectedType, startDate, endDate);
+    // Load chart data for stool and labtest
+    if (selectedType === "stool") {
+      loadStatsData(startDate, endDate);
+    } else if (selectedType === "labtest") {
+      loadLabtestStatsData();
+    }
   });
 
   const handleRefresh = useCallback(async () => {
