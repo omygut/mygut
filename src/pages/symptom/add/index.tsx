@@ -180,7 +180,7 @@ export default function SymptomAdd() {
   if (loading) {
     return (
       <View className="add-page">
-        <NavBar title="记录体感" />
+        <NavBar title="添加体感记录" />
         <View className="loading">加载中...</View>
       </View>
     );
@@ -188,7 +188,7 @@ export default function SymptomAdd() {
 
   return (
     <View className="add-page">
-      <NavBar title="记录体感" />
+      <NavBar title="添加体感记录" />
       {/* 日期时间 */}
       <View className="section">
         <Text className="section-title">时间</Text>

@@ -106,7 +106,7 @@ export default function StoolAdd() {
   if (loading) {
     return (
       <View className="add-page">
-        <NavBar title="添加排便记录" />
+        <NavBar title="添加大便记录" />
         <View className="loading">加载中...</View>
       </View>
     );
@@ -114,7 +114,7 @@ export default function StoolAdd() {
 
   return (
     <View className="add-page">
-      <NavBar title="添加排便记录" />
+      <NavBar title="添加大便记录" />
       {/* 日期时间 */}
       <View className="section">
         <Text className="section-title">时间</Text>
