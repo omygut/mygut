@@ -297,7 +297,7 @@ export default function LabTestAdd() {
   if (loading) {
     return (
       <View className="add-page">
-        <NavBar title="添加化验" />
+        <NavBar title="添加化验记录" />
         <View className="loading">加载中...</View>
       </View>
     );
@@ -307,7 +307,7 @@ export default function LabTestAdd() {
 
   return (
     <View className="add-page">
-      <NavBar title="添加化验" />
+      <NavBar title="添加化验记录" />
       {/* 日期时间 */}
       <View className="section">
         <Text className="section-title">时间</Text>

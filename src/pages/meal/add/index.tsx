@@ -213,7 +213,7 @@ export default function MealAdd() {
   if (loading) {
     return (
       <View className="add-page">
-        <NavBar title="添加饮食" />
+        <NavBar title="添加饮食记录" />
         <View className="loading">加载中...</View>
       </View>
     );
@@ -221,7 +221,7 @@ export default function MealAdd() {
 
   return (
     <View className="add-page">
-      <NavBar title="添加饮食" />
+      <NavBar title="添加饮食记录" />
       {/* 日期时间 */}
       <View className="section">
         <Text className="section-title">时间</Text>

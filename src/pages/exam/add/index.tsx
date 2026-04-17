@@ -242,7 +242,7 @@ export default function ExamAdd() {
   if (loading) {
     return (
       <View className="add-page">
-        <NavBar title="添加检查" />
+        <NavBar title="添加检查记录" />
         <View className="loading">加载中...</View>
       </View>
     );
@@ -252,7 +252,7 @@ export default function ExamAdd() {
 
   return (
     <View className="add-page">
-      <NavBar title="添加检查" />
+      <NavBar title="添加检查记录" />
       {/* 时间 */}
       <View className="section">
         <Text className="section-title">时间</Text>
