@@ -212,7 +212,7 @@ function drawChart(
   ctx.setLineDash([4, 4]);
   ctx.fillStyle = "#666";
   ctx.font = "10px sans-serif";
-  ctx.textBaseline = "top";
+  ctx.textBaseline = "bottom";
 
   for (const [x, eventGroup] of eventsByX) {
     ctx.beginPath();
@@ -221,8 +221,8 @@ function drawChart(
     ctx.stroke();
 
     ctx.save();
-    ctx.translate(x - 4, height - padding.bottom - 8);
-    ctx.rotate(-Math.PI / 2);
+    ctx.translate(x + 4, padding.top + 8);
+    ctx.rotate(Math.PI / 2);
 
     let labelOffset = 0;
     for (const event of eventGroup) {
