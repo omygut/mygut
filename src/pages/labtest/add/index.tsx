@@ -1,4 +1,4 @@
-import { View, Text, Image, Input } from "@tarojs/components";
+import { View, Text, Image } from "@tarojs/components";
 import Taro, { useRouter } from "@tarojs/taro";
 import { useState, useEffect, useRef } from "react";
 import { labTestService } from "../../../services/labtest";
@@ -9,6 +9,8 @@ import { formatDate, formatTime } from "../../../utils/date";
 import { showError } from "../../../utils/error";
 import CalendarPopup from "../../../components/CalendarPopup";
 import TimePicker from "../../../components/TimePicker";
+import IndicatorTable from "./components/IndicatorTable";
+import IndicatorEditModal from "./components/IndicatorEditModal";
 import type { LabTestIndicator } from "../../../types";
 import "./index.css";
 
@@ -398,137 +400,19 @@ export default function LabTestAdd() {
             )}
           </View>
         </View>
-        {indicators.length > 0 ? (
-          <View className="indicators-list">
-            {(() => {
-              // 按类别分组
-              const groups = indicators.reduce(
-                (acc, ind, originalIndex) => {
-                  const cat = ind.category || "其他";
-                  if (!acc[cat]) acc[cat] = [];
-                  acc[cat].push({ ...ind, originalIndex });
-                  return acc;
-                },
-                {} as Record<string, ((typeof indicators)[0] & { originalIndex: number })[]>,
-              );
-
-              const getRefText = (ind: (typeof indicators)[0]) =>
-                ind.refValue ||
-                (ind.refMin !== undefined && ind.refMax !== undefined
-                  ? `${ind.refMin}-${ind.refMax}`
-                  : ind.refMin !== undefined
-                    ? `≥${ind.refMin}`
-                    : ind.refMax !== undefined
-                      ? `≤${ind.refMax}`
-                      : "-");
-
-              // 判断值是否超出参考范围
-              const isNegativeValue = (value: string) => {
-                const v = value.toLowerCase().trim();
-                return v === "negative" || v === "neg" || v === "阴性" || v === "(-)" || v === "-";
-              };
-
-              const isPositiveValue = (value: string) => {
-                const v = value.toLowerCase().trim();
-                return v === "positive" || v === "pos" || v === "阳性" || v === "(+)" || v === "+";
-              };
-
-              const getAbnormalFlag = (ind: (typeof indicators)[0]) => {
-                // 定性结果：refValue=negative 时，阴性正常，阳性异常
-                if (ind.refValue === "negative") {
-                  if (isNegativeValue(ind.value)) return "";
-                  if (isPositiveValue(ind.value)) return "↑";
-                }
-
-                // 定量结果
-                const numValue = parseFloat(ind.value);
-                if (isNaN(numValue)) return "";
-                if (ind.refMin !== undefined && numValue < ind.refMin) return "↓";
-                if (ind.refMax !== undefined && numValue > ind.refMax) return "↑";
-                return "";
-              };
-
-              return Object.entries(groups).map(([category, items]) => (
-                <View key={category} className="indicator-group">
-                  <Text className="indicator-group-title">{category}</Text>
-                  <View className="indicator-table">
-                    <View className="indicator-table-header">
-                      <Text className="indicator-col-name">指标</Text>
-                      <Text className="indicator-col-value">结果</Text>
-                      <Text className="indicator-col-ref">参考</Text>
-                      <Text className="indicator-col-unit">单位</Text>
-                    </View>
-                    {items.map((ind) => {
-                      const abnormalFlag = getAbnormalFlag(ind);
-                      return (
-                        <View
-                          key={ind.originalIndex}
-                          className="indicator-table-row clickable"
-                          onClick={() => handleEditIndicator(ind.originalIndex)}
-                        >
-                          <Text className="indicator-col-name">{ind.name}</Text>
-                          <Text className="indicator-col-value">
-                            {ind.value}
-                            {abnormalFlag && (
-                              <Text
-                                className={`abnormal-flag ${abnormalFlag === "↑" ? "high" : "low"}`}
-                              >
-                                {abnormalFlag}
-                              </Text>
-                            )}
-                          </Text>
-                          <Text className="indicator-col-ref">{getRefText(ind)}</Text>
-                          <Text className="indicator-col-unit">{ind.unit || "-"}</Text>
-                        </View>
-                      );
-                    })}
-                  </View>
-                </View>
-              ));
-            })()}
-          </View>
-        ) : (
-          <Text className="no-indicators">点击"手动添加"或上传图片后"AI 识别"</Text>
-        )}
+        <IndicatorTable indicators={indicators} onEdit={handleEditIndicator} />
       </View>
 
       {/* 编辑指标弹窗 */}
       {editingIndicator && (
-        <View className="indicator-modal-mask" onClick={() => setEditingIndicator(null)}>
-          <View className="indicator-modal" onClick={(e) => e.stopPropagation()}>
-            <Text className="indicator-modal-title">
-              {editingIndicator.index === null ? "添加指标" : "编辑指标"}
-            </Text>
-            <View className="indicator-modal-field">
-              <Text className="indicator-modal-label">指标名称</Text>
-              <Input
-                className="indicator-modal-input"
-                placeholder="如：白细胞计数"
-                value={editingIndicator.name}
-                onInput={(e) => setEditingIndicator({ ...editingIndicator, name: e.detail.value })}
-              />
-            </View>
-            <View className="indicator-modal-field">
-              <Text className="indicator-modal-label">结果值</Text>
-              <Input
-                className="indicator-modal-input"
-                placeholder="如：5.2"
-                value={editingIndicator.value}
-                onInput={(e) => setEditingIndicator({ ...editingIndicator, value: e.detail.value })}
-              />
-            </View>
-            <View className="indicator-modal-actions">
-              <View className="indicator-modal-btn primary" onClick={handleSaveIndicator}>
-                保存
-              </View>
-            </View>
-            {editingIndicator.index !== null && (
-              <View className="indicator-modal-delete" onClick={handleDeleteIndicator}>
-                删除此指标
-              </View>
-            )}
-          </View>
-        </View>
+        <IndicatorEditModal
+          editing={editingIndicator}
+          onNameChange={(name) => setEditingIndicator({ ...editingIndicator, name })}
+          onValueChange={(value) => setEditingIndicator({ ...editingIndicator, value })}
+          onSave={handleSaveIndicator}
+          onDelete={handleDeleteIndicator}
+          onClose={() => setEditingIndicator(null)}
+        />
       )}
 
       {/* 提交按钮 */}
