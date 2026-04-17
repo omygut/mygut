@@ -492,15 +492,6 @@ export default function History() {
   );
 
   const renderLabtestStatsView = () => {
-    const refRange =
-      selectedIndicator.refMin !== undefined && selectedIndicator.refMax !== undefined
-        ? `${selectedIndicator.refMin}-${selectedIndicator.refMax}`
-        : selectedIndicator.refMax !== undefined
-          ? `<${selectedIndicator.refMax}`
-          : selectedIndicator.refMin !== undefined
-            ? `>${selectedIndicator.refMin}`
-            : "";
-
     const isOutOfRange = (value: number) => {
       if (selectedIndicator.refMin !== undefined && value < selectedIndicator.refMin) return true;
       if (selectedIndicator.refMax !== undefined && value > selectedIndicator.refMax) return true;
