@@ -659,16 +659,16 @@ export default function Stats() {
             <Text>整体感受</Text>
           </View>
           <View
-            className={`view-mode-tab ${symptomViewTab === "weight" ? "active" : ""}`}
-            onClick={() => handleSymptomViewTabChange("weight")}
-          >
-            <Text>体重趋势</Text>
-          </View>
-          <View
             className={`view-mode-tab ${symptomViewTab === "symptom" ? "active" : ""}`}
             onClick={() => handleSymptomViewTabChange("symptom")}
           >
             <Text>症状趋势</Text>
+          </View>
+          <View
+            className={`view-mode-tab ${symptomViewTab === "weight" ? "active" : ""}`}
+            onClick={() => handleSymptomViewTabChange("weight")}
+          >
+            <Text>体重趋势</Text>
           </View>
           <View
             className={`view-mode-tab ${symptomViewTab === "records" ? "active" : ""}`}
