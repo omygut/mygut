@@ -82,16 +82,25 @@ export default function AssessmentAdd() {
     const fromDate = formatDate(weekAgo);
     const dateRangeHint = `${fromDate} ~ ${toDate}`;
 
-    // 获取排便记录
+    // 获取排便记录（只统计 Bristol 5-7 的稀便/腹泻）
     try {
       const stoolRecords = await stoolService.getByDateRange(fromDate, toDate);
-      if (stoolRecords.length > 0) {
-        const stoolCount = stoolRecords.length;
-        autoFilled.stoolCount = { from: fromDate, to: toDate, count: stoolCount };
-        newAnswers.liquidStools = stoolCount;
-        hints.liquidStools = `从排便记录获取 (${dateRangeHint}，共${stoolCount}次)`;
+      const liquidStoolRecords = stoolRecords.filter((r) => r.type >= 5 && r.type <= 7);
+      if (liquidStoolRecords.length > 0) {
+        const totalCount = liquidStoolRecords.length;
+        autoFilled.stoolCount = { from: fromDate, to: toDate, count: totalCount };
+        if (type === "hbi") {
+          // HBI: 每日腹泻次数，取7天平均值
+          const avgCount = Math.round(totalCount / 7);
+          newAnswers.liquidStools = avgCount;
+          hints.liquidStools = `从排便记录获取 (${dateRangeHint}，${totalCount}次÷7天≈${avgCount}次/天)`;
+        } else {
+          // CDAI: 过去7天腹泻总次数
+          newAnswers.liquidStools = totalCount;
+          hints.liquidStools = `从排便记录获取 (${dateRangeHint}，共${totalCount}次)`;
+        }
       } else {
-        hints.liquidStools = "暂无近一周排便记录";
+        hints.liquidStools = "暂无近一周稀便记录 (Bristol 5-7)";
       }
     } catch {
       hints.liquidStools = "获取排便记录失败";
