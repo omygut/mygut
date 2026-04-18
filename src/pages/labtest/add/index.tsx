@@ -309,6 +309,7 @@ export default function LabTestAdd() {
     <View className="add-page">
       {/* 日期时间 */}
       <View className="section">
+        <Text className="section-title">时间</Text>
         <View className="time-row">
           <View className="picker-value" onClick={() => setCalendarVisible(true)}>
             {date}
