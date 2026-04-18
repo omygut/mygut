@@ -28,11 +28,17 @@
   flex-shrink: 0;
 }
 
-.record-symptoms {
-  font-size: 28px;
-  color: #333;
-  padding: 2px 8px;
-  border-radius: 4px;
+.record-symptoms-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.record-symptom-tag {
+  font-size: 24px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 2px solid;
 }
 
 .record-desc {

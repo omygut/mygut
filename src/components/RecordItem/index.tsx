@@ -5,6 +5,7 @@ import { SEVERITY_OPTIONS, FEELING_OPTIONS } from "../../constants/symptom";
 import AmountIcon from "../AmountIcon";
 import { STOOL_AMOUNTS } from "../../constants/stool";
 import { normalizeIndicators } from "../../services/labtest-standards";
+import { getSymptomItems } from "../../utils/symptom";
 import BristolIcon from "../BristolIcon";
 import type {
   SymptomRecord,
@@ -42,9 +43,8 @@ const getFeelingEmoji = (value: number): string => {
   return FEELING_OPTIONS.find((f) => f.value === value)?.emoji ?? UNKNOWN;
 };
 
-const getSeverityInfo = (severity?: 1 | 2 | 3) => {
-  if (!severity) return null;
-  return SEVERITY_OPTIONS.find((s) => s.value === severity) ?? null;
+const getSeverityColor = (severity: 1 | 2 | 3): string => {
+  return SEVERITY_OPTIONS.find((s) => s.value === severity)?.color ?? "#FFD230";
 };
 
 const getStoolAmountLabel = (amount: number): string => {
@@ -75,19 +75,31 @@ export default function RecordItem({ record, showTypeIcon = false }: RecordItemP
   const renderContent = () => {
     switch (record._type) {
       case "symptom": {
-        const severity = getSeverityInfo(record.severity);
+        const items = getSymptomItems(record);
         return (
           <>
             {record.overallFeeling && (
               <View className="record-feeling">{getFeelingEmoji(record.overallFeeling)}</View>
             )}
-            {record.symptoms.length > 0 && (
-              <Text
-                className="record-symptoms"
-                style={severity ? { backgroundColor: `${severity.color}20` } : undefined}
-              >
-                {record.symptoms.join("、")}
-              </Text>
+            {items.length > 0 && (
+              <View className="record-symptoms-list">
+                {items.map((item) => {
+                  const color = getSeverityColor(item.severity);
+                  return (
+                    <Text
+                      key={item.name}
+                      className="record-symptom-tag"
+                      style={{
+                        borderColor: color,
+                        backgroundColor: `${color}15`,
+                        color: color,
+                      }}
+                    >
+                      {item.name}
+                    </Text>
+                  );
+                })}
+              </View>
             )}
             {record.weight && <Text className="record-desc">{record.weight}kg</Text>}
           </>
