@@ -19,6 +19,7 @@ import StoolChartView from "./components/StoolChartView";
 import LabtestChartView from "./components/LabtestChartView";
 import WeightChartView from "./components/WeightChartView";
 import FeelingChartView from "./components/FeelingChartView";
+import SymptomTrendChartView from "./components/SymptomTrendChartView";
 import RecordsList from "./components/RecordsList";
 import "./index.css";
 
@@ -34,7 +35,7 @@ const DEFAULT_INDICATOR: StandardIndicator = {
 
 type StoolViewTab = "score" | "count" | "records";
 type LabtestViewTab = "chart" | "records";
-type SymptomViewTab = "feeling" | "weight" | "records";
+type SymptomViewTab = "feeling" | "weight" | "symptom" | "records";
 type DateRangePreset = "30" | "90" | "365" | "1095" | "all" | "custom";
 
 const PAGE_SIZE = 50;
@@ -105,6 +106,15 @@ export default function Stats() {
   // Feeling stats state
   const [feelingData, setFeelingData] = useState<{ date: string; value: number }[]>([]);
   const [feelingStatsLoading, setFeelingStatsLoading] = useState(false);
+
+  // Symptom trend stats state
+  const [symptomTrendData, setSymptomTrendData] = useState<{ date: string; value: number }[]>([]);
+  const [symptomTrendLoading, setSymptomTrendLoading] = useState(false);
+  const [selectedSymptom, setSelectedSymptom] = useState<string>(() => {
+    return Taro.getStorageSync("history_selected_symptom") || "";
+  });
+  const [symptomPickerVisible, setSymptomPickerVisible] = useState(false);
+
   const [selectedIndicator, setSelectedIndicator] = useState<StandardIndicator>(() => {
     const saved = Taro.getStorageSync("history_selected_indicator");
     return saved ? JSON.parse(saved) : DEFAULT_INDICATOR;
@@ -283,6 +293,27 @@ export default function Stats() {
     }
   }, []);
 
+  const loadSymptomTrendData = useCallback(
+    async (startDate: string, endDate: string, symptom: string) => {
+      if (!symptom) return;
+      setSymptomTrendLoading(true);
+      try {
+        const res = await Taro.cloud.callFunction({
+          name: "symptom-trend-stats",
+          data: { startDate, endDate, symptom },
+        });
+        const result = res.result as { data: { date: string; value: number }[] };
+        setSymptomTrendData(result.data || []);
+      } catch (error) {
+        console.error("加载症状趋势数据失败:", error);
+        Taro.showToast({ title: "加载失败", icon: "none" });
+      } finally {
+        setSymptomTrendLoading(false);
+      }
+    },
+    [],
+  );
+
   const needsRefreshRef = useRef(true);
 
   useEffect(() => {
@@ -337,6 +368,7 @@ export default function Stats() {
     setLabtestChartData([]);
     setWeightChartData([]);
     setFeelingData([]);
+    setSymptomTrendData([]);
     const { startDate, endDate } = getEffectiveDateRange();
     loadInitial(type, startDate, endDate);
     // Load chart data for stool, labtest, and symptom
@@ -347,6 +379,9 @@ export default function Stats() {
     } else if (type === "symptom") {
       loadFeelingStatsData(startDate, endDate);
       loadWeightStatsData(startDate, endDate);
+      if (selectedSymptom) {
+        loadSymptomTrendData(startDate, endDate, selectedSymptom);
+      }
     }
   };
 
@@ -376,7 +411,17 @@ export default function Stats() {
       loadFeelingStatsData(startDate, endDate);
     } else if (tab === "weight" && weightChartData.length === 0) {
       loadWeightStatsData(startDate, endDate);
+    } else if (tab === "symptom" && symptomTrendData.length === 0 && selectedSymptom) {
+      loadSymptomTrendData(startDate, endDate, selectedSymptom);
     }
+  };
+
+  const handleSymptomSelect = (symptom: string) => {
+    setSelectedSymptom(symptom);
+    Taro.setStorageSync("history_selected_symptom", symptom);
+    setSymptomTrendData([]);
+    const { startDate, endDate } = getEffectiveDateRange();
+    loadSymptomTrendData(startDate, endDate, symptom);
   };
 
   const handleIndicatorSelect = (indicator: StandardIndicator) => {
@@ -414,6 +459,8 @@ export default function Stats() {
           loadFeelingStatsData(startDate, endDate);
         } else if (symptomViewTab === "weight") {
           loadWeightStatsData(startDate, endDate);
+        } else if (symptomViewTab === "symptom" && selectedSymptom) {
+          loadSymptomTrendData(startDate, endDate, selectedSymptom);
         }
       }
     }
@@ -443,6 +490,8 @@ export default function Stats() {
         loadFeelingStatsData(start, end);
       } else if (symptomViewTab === "weight") {
         loadWeightStatsData(start, end);
+      } else if (symptomViewTab === "symptom" && selectedSymptom) {
+        loadSymptomTrendData(start, end, selectedSymptom);
       }
     }
   };
@@ -616,6 +665,12 @@ export default function Stats() {
             <Text>体重趋势</Text>
           </View>
           <View
+            className={`view-mode-tab ${symptomViewTab === "symptom" ? "active" : ""}`}
+            onClick={() => handleSymptomViewTabChange("symptom")}
+          >
+            <Text>症状趋势</Text>
+          </View>
+          <View
             className={`view-mode-tab ${symptomViewTab === "records" ? "active" : ""}`}
             onClick={() => handleSymptomViewTabChange("records")}
           >
@@ -674,6 +729,20 @@ export default function Stats() {
           chartData={weightChartData}
           loading={weightStatsLoading}
           events={events}
+          onEventTap={handleEventTap}
+          onAddEvent={handleAddEvent}
+          dateRangeSelector={renderDateRangeSelector()}
+        />
+      ) : selectedType === "symptom" && symptomViewTab === "symptom" ? (
+        <SymptomTrendChartView
+          chartData={symptomTrendData}
+          loading={symptomTrendLoading}
+          selectedSymptom={selectedSymptom}
+          symptomPickerVisible={symptomPickerVisible}
+          events={events}
+          onSymptomSelect={handleSymptomSelect}
+          onSymptomPickerOpen={() => setSymptomPickerVisible(true)}
+          onSymptomPickerClose={() => setSymptomPickerVisible(false)}
           onEventTap={handleEventTap}
           onAddEvent={handleAddEvent}
           dateRangeSelector={renderDateRangeSelector()}
