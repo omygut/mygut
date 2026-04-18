@@ -50,6 +50,21 @@ type DateRangePreset = "30" | "90" | "365" | "1095" | "all" | "custom";
 type ExamTypeFilter = "all" | (typeof EXAM_TYPES)[number]["value"];
 type AssessmentTypeFilter = "all" | (typeof ASSESSMENT_TYPES)[number]["value"];
 
+// 化验类别列表
+const LABTEST_CATEGORIES = [
+  "血常规",
+  "炎症指标",
+  "肝肾功能",
+  "电解质",
+  "血糖",
+  "心肌标志物",
+  "凝血功能",
+  "血脂",
+  "尿常规",
+  "便常规",
+] as const;
+type LabtestCategoryFilter = "all" | (typeof LABTEST_CATEGORIES)[number];
+
 const PAGE_SIZE = 50;
 
 const services = {
@@ -121,6 +136,9 @@ export default function Stats() {
 
   // Assessment filter state
   const [assessmentTypeFilter, setAssessmentTypeFilter] = useState<AssessmentTypeFilter>("all");
+
+  // Labtest category filter state
+  const [labtestCategoryFilter, setLabtestCategoryFilter] = useState<LabtestCategoryFilter>("all");
 
   // Feeling stats state
   const [feelingData, setFeelingData] = useState<{ date: string; value: number }[]>([]);
@@ -360,8 +378,30 @@ export default function Stats() {
           (r as AssessmentRecord & { _type: "assessment" }).type === assessmentTypeFilter,
       );
     }
+    if (
+      selectedType === "labtest" &&
+      labtestViewTab === "records" &&
+      labtestCategoryFilter !== "all"
+    ) {
+      return records.filter((r) => {
+        if (r._type !== "labtest") return false;
+        const labtestRecord = r as LabTestRecord & { _type: "labtest" };
+        // 检查是否有任何指标属于选中的类别
+        return labtestRecord.indicators.some((ind) => {
+          const matched = findStandardIndicator(ind.name, labtestRecord.specimen);
+          return matched && matched.category === labtestCategoryFilter;
+        });
+      });
+    }
     return records;
-  }, [records, selectedType, examTypeFilter, assessmentTypeFilter]);
+  }, [
+    records,
+    selectedType,
+    examTypeFilter,
+    assessmentTypeFilter,
+    labtestCategoryFilter,
+    labtestViewTab,
+  ]);
 
   useEffect(() => {
     const handleRecordChange = () => {
@@ -781,6 +821,26 @@ export default function Stats() {
               onClick={() => setAssessmentTypeFilter(type.value)}
             >
               <Text>{type.label}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {selectedType === "labtest" && labtestViewTab === "records" && (
+        <View className="filter-tabs">
+          <View
+            className={`filter-tab ${labtestCategoryFilter === "all" ? "active" : ""}`}
+            onClick={() => setLabtestCategoryFilter("all")}
+          >
+            <Text>全部</Text>
+          </View>
+          {LABTEST_CATEGORIES.map((category) => (
+            <View
+              key={category}
+              className={`filter-tab ${labtestCategoryFilter === category ? "active" : ""}`}
+              onClick={() => setLabtestCategoryFilter(category)}
+            >
+              <Text>{category}</Text>
             </View>
           ))}
         </View>
