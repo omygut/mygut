@@ -1,8 +1,8 @@
-import { View, Text, Button } from "@tarojs/components";
+import { Button, Text, View } from "@tarojs/components";
 import Taro from "@tarojs/taro";
 import { useState } from "react";
-import { saveExportToFile } from "../../services/export";
 import { confirmAndDeleteAllData } from "../../services/deleteAll";
+import { saveExportToFile } from "../../services/export";
 import "./index.css";
 
 declare const APP_VERSION: string;
@@ -87,9 +87,7 @@ export default function Settings() {
 
       <View className="disclaimer-section">
         <Text className="disclaimer-text">感谢「协你同心」群友们的支持与反馈。</Text>
-        <Text className="disclaimer-text">
-          本应用仅供个人健康记录使用，不提供医疗建议。如有健康问题，请咨询专业医生。
-        </Text>
+        <Text className="disclaimer-text">本应用仅供个人健康记录使用，不提供医疗建议。</Text>
       </View>
     </View>
   );
