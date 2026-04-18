@@ -79,12 +79,33 @@ Integration tests use the in-memory fake database (`TARO_APP_ENV=test`). The fak
 Use `tcb` CLI to manage cloud resources. Environment ID: `cloud1-8gzx205084c1da0f`
 
 ```bash
-# Check collection permissions
-tcb permission get collection -e cloud1-8gzx205084c1da0f
-
 # List environments
 tcb env list
+
+# Check collection permissions
+tcb permission get collection -e cloud1-8gzx205084c1da0f
 ```
+
+### NoSQL Operations
+
+```bash
+# Count records in a collection
+tcb db nosql execute -e cloud1-8gzx205084c1da0f --command '[{"TableName":"stool_records","CommandType":"COMMAND","Command":"{\"count\":\"stool_records\",\"query\":{}}"}]'
+
+# Query records (with filter, sort, limit)
+tcb db nosql execute -e cloud1-8gzx205084c1da0f --command '[{"TableName":"symptom_records","CommandType":"QUERY","Command":"{\"find\":\"symptom_records\",\"filter\":{\"userId\":\"USER_ID\"},\"sort\":{\"date\":-1},\"limit\":5}"}]'
+
+# Insert a record
+tcb db nosql execute -e cloud1-8gzx205084c1da0f --command '[{"TableName":"symptom_records","CommandType":"INSERT","Command":"{\"insert\":\"symptom_records\",\"documents\":[{\"date\":\"2026-01-01\",\"time\":\"09:00\",\"symptoms\":[],\"userId\":\"USER_ID\",\"_openid\":\"USER_ID\"}]}"}]'
+
+# Delete records (limit:0 means delete all matching)
+tcb db nosql execute -e cloud1-8gzx205084c1da0f --command '[{"TableName":"symptom_records","CommandType":"DELETE","Command":"{\"delete\":\"symptom_records\",\"deletes\":[{\"q\":{\"userId\":\"USER_ID\",\"date\":{\"$lt\":\"2026-01-01\"}},\"limit\":0}]}"}]'
+
+# Aggregate (group by userId with count)
+tcb db nosql execute -e cloud1-8gzx205084c1da0f --command '[{"TableName":"stool_records","CommandType":"COMMAND","Command":"{\"aggregate\":\"stool_records\",\"pipeline\":[{\"$group\":{\"_id\":\"$userId\",\"count\":{\"$sum\":1}}},{\"$sort\":{\"count\":-1}}],\"cursor\":{}}"}]'
+```
+
+Collections: `stool_records`, `symptom_records`, `meal_records`, `medication_records`, `labtest_records`, `exam_records`, `error_logs`
 
 ## Version Bump
 
