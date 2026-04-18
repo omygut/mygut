@@ -125,18 +125,20 @@ export default function AssessmentAdd() {
             hints.generalWellbeing = "近一周记录无整体感受数据";
           }
         } else {
-          // CDAI: 计算过去7天的总和
+          // CDAI: 过去7天平均值×7 来估算总和
           let totalWellbeing = 0;
-          let daysWithData = 0;
+          let recordCount = 0;
           for (const record of symptomRecords) {
             if (record.overallFeeling !== undefined) {
               totalWellbeing += feelingMap[record.overallFeeling] ?? 0;
-              daysWithData++;
+              recordCount++;
             }
           }
-          if (daysWithData > 0) {
-            newAnswers.generalWellbeing = totalWellbeing;
-            hints.generalWellbeing = `从身体状态记录获取 (${dateRangeHint}，${daysWithData}天，总分${totalWellbeing})`;
+          if (recordCount > 0) {
+            const avgWellbeing = totalWellbeing / recordCount;
+            const estimated7DayTotal = Math.round(avgWellbeing * 7);
+            newAnswers.generalWellbeing = estimated7DayTotal;
+            hints.generalWellbeing = `从身体状态记录获取 (${dateRangeHint}，${recordCount}条记录，平均${avgWellbeing.toFixed(1)}×7≈${estimated7DayTotal})`;
           } else {
             hints.generalWellbeing = "近一周记录无整体感受数据";
           }
