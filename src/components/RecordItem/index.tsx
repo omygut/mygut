@@ -79,7 +79,7 @@ export default function RecordItem({ record, showTypeIcon = false }: RecordItemP
         return (
           <>
             {record.overallFeeling && (
-              <Text className="record-feeling">{getFeelingEmoji(record.overallFeeling)}</Text>
+              <View className="record-feeling">{getFeelingEmoji(record.overallFeeling)}</View>
             )}
             {record.symptoms.length > 0 && (
               <Text

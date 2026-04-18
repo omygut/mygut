@@ -23,9 +23,9 @@
 
 .record-feeling {
   font-size: 28px;
-  margin-right: 8px;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .record-symptoms {
@@ -33,6 +33,11 @@
   color: #333;
   padding: 2px 8px;
   border-radius: 4px;
+  flex: 1;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .record-desc {
