@@ -117,9 +117,9 @@
 }
 
 .multi-select-item.active {
-  background-color: var(--color-red-bg);
-  border-color: var(--color-red);
-  color: var(--color-red);
+  background-color: var(--color-blue-bg);
+  border-color: var(--color-blue);
+  color: var(--color-blue);
 }
 
 /* 计算按钮 */
