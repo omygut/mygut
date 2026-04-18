@@ -52,7 +52,7 @@ exports.main = async (event) => {
   const result = Object.entries(dailyData)
     .map(([date, data]) => ({
       date,
-      value: data.sum / data.count,
+      value: Math.round((data.sum / data.count) * 10) / 10,
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
