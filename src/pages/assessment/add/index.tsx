@@ -68,12 +68,18 @@ export default function AssessmentAdd() {
     const autoFilled: typeof autoFilledData = {};
     const newAnswers: Record<string, number | string[]> = { ...answers };
 
-    // 获取过去7天的腹泻次数
+    // 获取腹泻次数：HBI 取当天，CDAI 取过去7天
     const today = new Date();
-    const weekAgo = new Date(today);
-    weekAgo.setDate(today.getDate() - 7);
-    const fromDate = formatDate(weekAgo);
     const toDate = formatDate(today);
+    let fromDate: string;
+
+    if (type === "hbi") {
+      fromDate = toDate; // 当天
+    } else {
+      const weekAgo = new Date(today);
+      weekAgo.setDate(today.getDate() - 7);
+      fromDate = formatDate(weekAgo);
+    }
 
     try {
       const stoolRecords = await stoolService.getByDateRange(fromDate, toDate);

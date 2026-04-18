@@ -38,6 +38,7 @@ export const HBI_QUESTIONS = {
   liquidStools: {
     label: "每日腹泻次数",
     type: "number" as const,
+    autoFill: true,
     placeholder: "过去一天的稀便次数",
   },
   abdominalMass: {
