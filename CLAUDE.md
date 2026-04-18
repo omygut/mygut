@@ -99,6 +99,7 @@ tcb db nosql execute -e cloud1-8gzx205084c1da0f --command '[{"TableName":"sympto
 tcb db nosql execute -e cloud1-8gzx205084c1da0f --command '[{"TableName":"symptom_records","CommandType":"INSERT","Command":"{\"insert\":\"symptom_records\",\"documents\":[{\"date\":\"2026-01-01\",\"time\":\"09:00\",\"symptoms\":[],\"userId\":\"USER_ID\",\"_openid\":\"USER_ID\"}]}"}]'
 
 # Delete records (limit:0 means delete all matching)
+# IMPORTANT: Before DELETE or UPDATE, always check affected count and confirm with user first
 tcb db nosql execute -e cloud1-8gzx205084c1da0f --command '[{"TableName":"symptom_records","CommandType":"DELETE","Command":"{\"delete\":\"symptom_records\",\"deletes\":[{\"q\":{\"userId\":\"USER_ID\",\"date\":{\"$lt\":\"2026-01-01\"}},\"limit\":0}]}"}]'
 
 # Aggregate (group by userId with count)
