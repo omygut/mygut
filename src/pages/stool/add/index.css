@@ -18,10 +18,6 @@
   transition: all 0.2s;
 }
 
-.bristol-item.active {
-  background-color: var(--color-blue-bg);
-  border-color: var(--color-blue);
-}
 
 .bristol-emoji {
   font-size: 36px;
@@ -64,7 +60,7 @@
 }
 
 .amount-label {
-  font-size: 28px;
+  font-size: 24px;
   color: var(--color-text);
 }
 

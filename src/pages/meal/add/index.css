@@ -143,11 +143,6 @@
   border: 2px solid transparent;
 }
 
-.amount-item.active {
-  background-color: var(--color-blue-bg);
-  border-color: var(--color-blue);
-}
-
 .amount-emoji {
   margin-bottom: 8px;
 }
@@ -158,5 +153,5 @@
 }
 
 .amount-item.active .amount-label {
-  color: var(--color-blue);
+  color: var(--color-text);
 }

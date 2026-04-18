@@ -325,7 +325,7 @@ export default function MealAdd() {
               className={`amount-item ${amount === option.value ? "active" : ""}`}
               onClick={() => setAmount(option.value as typeof amount)}
             >
-              <MealAmountIcon level={option.value} />
+              <MealAmountIcon level={option.value} active={amount === option.value} />
               <Text className="amount-label">{option.label}</Text>
             </View>
           ))}
