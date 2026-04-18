@@ -16,10 +16,6 @@
   transition: all 0.2s;
 }
 
-.feeling-item.active {
-  background-color: var(--color-blue-bg);
-  border-color: var(--color-blue);
-}
 
 .feeling-emoji {
   font-size: 48px;
@@ -32,7 +28,7 @@
 }
 
 .feeling-item.active .feeling-label {
-  color: var(--color-blue);
+  color: var(--color-text);
 }
 
 /* 症状快捷输入 */

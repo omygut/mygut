@@ -19,8 +19,8 @@
 }
 
 .bristol-item.active {
-  background-color: var(--color-blue-bg);
-  border-color: var(--color-blue);
+  background-color: var(--color-purple-bg);
+  border-color: var(--color-purple);
 }
 
 .bristol-emoji {
@@ -59,8 +59,8 @@
 }
 
 .amount-item.active {
-  background-color: var(--color-blue-bg);
-  border-color: var(--color-blue);
+  background-color: var(--color-purple-bg);
+  border-color: var(--color-purple);
 }
 
 .amount-label {
@@ -69,7 +69,7 @@
 }
 
 .amount-item.active .amount-label {
-  color: var(--color-blue);
+  color: var(--color-purple);
 }
 
 /* 备注快捷输入 */

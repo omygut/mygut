@@ -2,8 +2,9 @@ import { View, Text } from "@tarojs/components";
 import Taro from "@tarojs/taro";
 import { COLORS } from "../../constants/colors";
 import { EXAM_TYPES } from "../../constants/exam";
-import { SEVERITY_OPTIONS, FEELING_OPTIONS } from "../../constants/symptom";
+import { SEVERITY_OPTIONS } from "../../constants/symptom";
 import MealAmountIcon from "../MealAmountIcon";
+import FeelingIcon from "../FeelingIcon";
 import { STOOL_AMOUNTS } from "../../constants/stool";
 import { normalizeIndicators } from "../../services/labtest-standards";
 import { getSymptomItems } from "../../utils/symptom";
@@ -43,10 +44,6 @@ const RECORD_TYPE_MAP = Object.fromEntries(
 
 const UNKNOWN = "❓";
 
-const getFeelingEmoji = (value: number): string => {
-  return FEELING_OPTIONS.find((f) => f.value === value)?.emoji ?? UNKNOWN;
-};
-
 const getSeverityColor = (severity: 1 | 2 | 3): string => {
   return SEVERITY_OPTIONS.find((s) => s.value === severity)?.color ?? COLORS.yellow;
 };
@@ -83,7 +80,9 @@ export default function RecordItem({ record, showTypeIcon = false }: RecordItemP
         return (
           <>
             {record.overallFeeling && (
-              <View className="record-feeling">{getFeelingEmoji(record.overallFeeling)}</View>
+              <View className="record-feeling">
+                <FeelingIcon level={record.overallFeeling} size={18} active />
+              </View>
             )}
             {items.length > 0 && (
               <View className="record-symptoms-list">

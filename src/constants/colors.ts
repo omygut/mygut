@@ -3,9 +3,9 @@ export const COLORS = {
   // 主题色
   primary: "#5fcf9a",
   // 语义色
-  blue: "#1890ff",
-  yellow: "#faad14",
-  orange: "#e65100",
+  lightBlue: "#69c0ff",
+  yellow: "#ffc53d",
+  orange: "#f57c00",
   red: "#f5222d",
   // 中性色
   border: "#e8e8e8",
