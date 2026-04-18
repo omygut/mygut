@@ -61,7 +61,7 @@ export const HBI_QUESTIONS = {
       { value: "apthousUlcers", label: "口腔溃疡" },
       { value: "analFissure", label: "肛裂" },
       { value: "fistula", label: "肛瘘" },
-      { value: "abscess", label: "脓肿" },
+      { value: "abscess", label: "肛周脓肿" },
     ],
   },
 };
