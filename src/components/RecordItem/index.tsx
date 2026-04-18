@@ -9,7 +9,6 @@ import { getSymptomItems } from "../../utils/symptom";
 import BristolIcon from "../BristolIcon";
 import type {
   SymptomRecord,
-  SymptomItem,
   MealRecord,
   StoolRecord,
   MedicationRecord,
