@@ -20,9 +20,11 @@ import {
   RECORD_TYPE_OPTIONS,
   LabTestRecord,
   ExamRecord,
+  AssessmentRecord,
   ChartEvent,
 } from "../../types";
 import { EXAM_TYPES } from "../../constants/exam";
+import { ASSESSMENT_TYPES } from "../../constants/assessment";
 import StoolChartView from "./components/StoolChartView";
 import LabtestChartView from "./components/LabtestChartView";
 import WeightChartView from "./components/WeightChartView";
@@ -46,6 +48,7 @@ type LabtestViewTab = "chart" | "records";
 type SymptomViewTab = "feeling" | "weight" | "symptom" | "records";
 type DateRangePreset = "30" | "90" | "365" | "1095" | "all" | "custom";
 type ExamTypeFilter = "all" | (typeof EXAM_TYPES)[number]["value"];
+type AssessmentTypeFilter = "all" | (typeof ASSESSMENT_TYPES)[number]["value"];
 
 const PAGE_SIZE = 50;
 
@@ -115,6 +118,9 @@ export default function Stats() {
 
   // Exam filter state
   const [examTypeFilter, setExamTypeFilter] = useState<ExamTypeFilter>("all");
+
+  // Assessment filter state
+  const [assessmentTypeFilter, setAssessmentTypeFilter] = useState<AssessmentTypeFilter>("all");
 
   // Feeling stats state
   const [feelingData, setFeelingData] = useState<{ date: string; value: number }[]>([]);
@@ -347,8 +353,15 @@ export default function Stats() {
           r._type === "exam" && (r as ExamRecord & { _type: "exam" }).examType === examTypeFilter,
       );
     }
+    if (selectedType === "assessment" && assessmentTypeFilter !== "all") {
+      return records.filter(
+        (r) =>
+          r._type === "assessment" &&
+          (r as AssessmentRecord & { _type: "assessment" }).type === assessmentTypeFilter,
+      );
+    }
     return records;
-  }, [records, selectedType, examTypeFilter]);
+  }, [records, selectedType, examTypeFilter, assessmentTypeFilter]);
 
   useEffect(() => {
     const handleRecordChange = () => {
@@ -746,6 +759,26 @@ export default function Stats() {
               key={type.value}
               className={`filter-tab ${examTypeFilter === type.value ? "active" : ""}`}
               onClick={() => setExamTypeFilter(type.value)}
+            >
+              <Text>{type.label}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {selectedType === "assessment" && (
+        <View className="filter-tabs">
+          <View
+            className={`filter-tab ${assessmentTypeFilter === "all" ? "active" : ""}`}
+            onClick={() => setAssessmentTypeFilter("all")}
+          >
+            <Text>全部</Text>
+          </View>
+          {ASSESSMENT_TYPES.map((type) => (
+            <View
+              key={type.value}
+              className={`filter-tab ${assessmentTypeFilter === type.value ? "active" : ""}`}
+              onClick={() => setAssessmentTypeFilter(type.value)}
             >
               <Text>{type.label}</Text>
             </View>
