@@ -236,55 +236,63 @@ export default function SymptomAdd() {
       {/* 症状 */}
       <View className="section">
         <Text className="section-title">症状（可选）</Text>
-        {/* 已选症状 - 点击切换严重程度，长按删除 */}
-        {symptomItems.length > 0 && (
-          <View className="selected-symptoms">
-            {symptomItems.map((item) => {
-              const severityInfo = SEVERITY_OPTIONS.find((s) => s.value === item.severity)!;
-              return (
-                <View
-                  key={item.name}
-                  className="selected-symptom-tag"
-                  style={{
-                    borderColor: severityInfo.color,
-                    backgroundColor: `${severityInfo.color}15`,
-                  }}
-                  onClick={() => handleCycleSeverity(item.name)}
-                  onLongPress={() => handleToggleSymptom(item.name)}
-                >
-                  <Text style={{ color: severityInfo.color }}>
-                    {item.name}·{severityInfo.label}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        )}
-        {/* 可选症状 */}
         <View className="symptom-shortcuts">
-          {SYMPTOM_SHORTCUTS.filter((s) => !symptomItems.some((item) => item.name === s)).map(
-            (symptom) => (
+          {SYMPTOM_SHORTCUTS.map((symptom) => {
+            const selected = symptomItems.find((item) => item.name === symptom);
+            const severityInfo = selected
+              ? SEVERITY_OPTIONS.find((s) => s.value === selected.severity)
+              : null;
+            return (
               <View
                 key={symptom}
                 className="symptom-tag"
-                onClick={() => handleToggleSymptom(symptom)}
+                style={
+                  severityInfo
+                    ? {
+                        borderColor: severityInfo.color,
+                        backgroundColor: `${severityInfo.color}15`,
+                        color: severityInfo.color,
+                      }
+                    : undefined
+                }
+                onClick={() =>
+                  selected ? handleCycleSeverity(symptom) : handleToggleSymptom(symptom)
+                }
+                onLongPress={() => selected && handleToggleSymptom(symptom)}
               >
                 {symptom}
               </View>
-            ),
-          )}
-          {savedCustomSymptoms
-            .filter((s) => !symptomItems.some((item) => item.name === s))
-            .map((symptom) => (
+            );
+          })}
+          {savedCustomSymptoms.map((symptom) => {
+            const selected = symptomItems.find((item) => item.name === symptom);
+            const severityInfo = selected
+              ? SEVERITY_OPTIONS.find((s) => s.value === selected.severity)
+              : null;
+            return (
               <View
                 key={symptom}
                 className="symptom-tag custom"
-                onClick={() => handleToggleSymptom(symptom)}
-                onLongPress={() => handleDeleteCustomSymptom(symptom)}
+                style={
+                  severityInfo
+                    ? {
+                        borderColor: severityInfo.color,
+                        backgroundColor: `${severityInfo.color}15`,
+                        color: severityInfo.color,
+                      }
+                    : undefined
+                }
+                onClick={() =>
+                  selected ? handleCycleSeverity(symptom) : handleToggleSymptom(symptom)
+                }
+                onLongPress={() =>
+                  selected ? handleToggleSymptom(symptom) : handleDeleteCustomSymptom(symptom)
+                }
               >
                 {symptom}
               </View>
-            ))}
+            );
+          })}
         </View>
         <View className="custom-symptom-row">
           <Input

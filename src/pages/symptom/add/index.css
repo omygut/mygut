@@ -35,21 +35,6 @@
   color: #1890ff;
 }
 
-/* 已选症状 */
-.selected-symptoms {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.selected-symptom-tag {
-  padding: 12px 24px;
-  border-radius: 8px;
-  border: 2px solid;
-  font-size: 26px;
-}
-
 /* 症状快捷输入 */
 .symptom-shortcuts {
   display: flex;
