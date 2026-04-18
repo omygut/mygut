@@ -15,8 +15,8 @@
 }
 
 .type-item:active {
-  background-color: var(--color-primary-bg);
-  border-color: var(--color-primary);
+  background-color: var(--color-selected-bg);
+  border-color: var(--color-selected);
 }
 
 .type-label {
@@ -67,9 +67,9 @@
 }
 
 .option-item.active {
-  background-color: var(--color-primary-bg);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  background-color: var(--color-selected-bg);
+  border-color: var(--color-selected);
+  color: var(--color-selected);
 }
 
 /* 数字输入 */
@@ -117,9 +117,9 @@
 }
 
 .multi-select-item.active {
-  background-color: var(--color-primary-bg);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  background-color: var(--color-selected-bg);
+  border-color: var(--color-selected);
+  color: var(--color-selected);
 }
 
 /* 计算按钮 */

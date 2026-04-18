@@ -1,7 +1,9 @@
 /* Global styles */
 page {
   --color-primary: #5fcf9a;
-  --color-primary-bg: #e8f5e9;
+  --color-primary-bg: #f0faf3;
+  --color-selected: var(--color-text-secondary);
+  --color-selected-bg: var(--color-bg);
   --color-yellow: #ffc53d;
   --color-orange: #f57c00;
   --color-red: #f5222d;
