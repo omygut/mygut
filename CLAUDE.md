@@ -103,6 +103,7 @@ tcb db nosql execute -e cloud1-8gzx205084c1da0f --command '[{"TableName":"sympto
 
 # Update records
 # IMPORTANT: Before DELETE or UPDATE, always check affected count and confirm with user first
+# IMPORTANT: DELETE and UPDATE must always include userId in the query to avoid affecting other users' data
 tcb db nosql execute -e cloud1-8gzx205084c1da0f --command '[{"TableName":"symptom_records","CommandType":"UPDATE","Command":"{\"update\":\"symptom_records\",\"updates\":[{\"q\":{\"_id\":\"RECORD_ID\"},\"u\":{\"$set\":{\"note\":\"updated note\"}}}]}"}]'
 
 # Delete records (limit:0 means delete all matching)
