@@ -2,7 +2,7 @@ import { View, Text } from "@tarojs/components";
 import Taro from "@tarojs/taro";
 import { EXAM_TYPES } from "../../constants/exam";
 import { SEVERITY_OPTIONS, FEELING_OPTIONS } from "../../constants/symptom";
-import AmountIcon from "../AmountIcon";
+import MealAmountIcon from "../MealAmountIcon";
 import { STOOL_AMOUNTS } from "../../constants/stool";
 import { normalizeIndicators } from "../../services/labtest-standards";
 import { getSymptomItems } from "../../utils/symptom";
@@ -114,7 +114,7 @@ export default function RecordItem({ record, showTypeIcon = false }: RecordItemP
         return (
           <>
             <View className="record-feeling">
-              <AmountIcon level={record.amount as 0 | 1 | 2 | 3 | 4} size={24} />
+              <MealAmountIcon level={record.amount as 0 | 1 | 2 | 3 | 4} size={24} />
             </View>
             <Text className="record-desc">{record.foods.join("、")}</Text>
           </>

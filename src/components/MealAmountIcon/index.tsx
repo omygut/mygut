@@ -1,8 +1,9 @@
 import { Image } from "@tarojs/components";
+import { COLORS } from "../../constants/colors";
 
 function generateAmountSvg(level: 0 | 1 | 2 | 3 | 4): string {
   const bucketColor = "#999";
-  const filledColor = "#5FCF9A";
+  const filledColor = level <= 2 ? COLORS.primary : level === 3 ? COLORS.yellow : COLORS.orange;
 
   // Bucket shape: top width 20 (x: 2-22), bottom width 16 (x: 4-20)
   // Height from y=4 to y=18 (14 units)
@@ -40,7 +41,7 @@ interface AmountIconProps {
   size?: number;
 }
 
-export default function AmountIcon({ level, size = 24 }: AmountIconProps) {
+export default function MealAmountIcon({ level, size = 24 }: AmountIconProps) {
   const height = (size / 24) * 20;
   return (
     <Image
