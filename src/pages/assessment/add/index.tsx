@@ -132,11 +132,13 @@ export default function AssessmentAdd() {
           }
         }
         if (!painFound) {
-          hints.abdominalPain = "近一周无腹痛记录";
+          newAnswers.abdominalPain = 0; // 无腹痛
+          hints.abdominalPain = "近一周无腹痛记录，默认为无";
         }
 
-        // 腹部包块 - 无法从现有数据获取
-        hints.abdominalMass = "需手动填写";
+        // 腹部包块 - 无法从现有数据获取，默认为无
+        newAnswers.abdominalMass = 0;
+        hints.abdominalMass = "默认为无，如有请手动修改";
 
         // 并发症映射
         const complicationMap: Record<string, string> = {
