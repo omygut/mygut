@@ -18,12 +18,27 @@ import {
   calculateCDAI,
   getAssessmentLevel,
 } from "../../../constants/assessment";
+import { COLORS } from "../../../constants/colors";
 import { formatDate, formatTime } from "../../../utils/date";
 import { showError } from "../../../utils/error";
 import CalendarPopup from "../../../components/CalendarPopup";
 import TimePicker from "../../../components/TimePicker";
 import type { AssessmentType, AssessmentLevel } from "../../../types";
 import "./index.css";
+
+// 选项值对应的边框颜色
+// 2个选项：绿色/橙色；3个及以上：递进颜色 green → blue → yellow → orange → red
+const getOptionBorderColor = (value: number, optionCount: number): string => {
+  if (optionCount <= 2) {
+    return value === 0 ? COLORS.primary : COLORS.orange;
+  }
+  // 递进颜色
+  if (value === 0) return COLORS.primary;
+  if (value === 1) return COLORS.lightBlue;
+  if (value === 2) return COLORS.yellow;
+  if (value === 3) return COLORS.orange;
+  return COLORS.red;
+};
 
 export default function AssessmentAdd() {
   const router = useRouter();
@@ -286,26 +301,31 @@ export default function AssessmentAdd() {
     setAutoFilledData(autoFilled);
     setFieldHints(hints);
     setAnswers(newAnswers);
+    // 自动填充后计算分数
+    const score = type === "hbi" ? calculateHBI(newAnswers) : calculateCDAI(newAnswers);
+    const level = getAssessmentLevel(type, score);
+    setResult({ score, level });
   };
 
   const handleSelectType = async (type: AssessmentType) => {
     setAssessmentType(type);
     setAnswers({});
     setResult(null);
+    // 更新页面标题
+    const typeLabel = ASSESSMENT_TYPES.find((t) => t.value === type)?.label;
+    Taro.setNavigationBarTitle({ title: `${typeLabel}评估` });
     await autoFillData(type);
   };
 
   const handleAnswerChange = (key: string, value: number | string[]) => {
-    setAnswers((prev) => ({ ...prev, [key]: value }));
-    setResult(null);
-  };
-
-  const handleCalculate = () => {
-    if (!assessmentType) return;
-
-    const score = assessmentType === "hbi" ? calculateHBI(answers) : calculateCDAI(answers);
-    const level = getAssessmentLevel(assessmentType, score);
-    setResult({ score, level });
+    const newAnswers = { ...answers, [key]: value };
+    setAnswers(newAnswers);
+    // 实时计算分数
+    if (assessmentType) {
+      const score = assessmentType === "hbi" ? calculateHBI(newAnswers) : calculateCDAI(newAnswers);
+      const level = getAssessmentLevel(assessmentType, score);
+      setResult({ score, level });
+    }
   };
 
   const handleDelete = async () => {
@@ -425,13 +445,6 @@ export default function AssessmentAdd() {
         />
       </View>
 
-      {/* 评估类型 */}
-      <View className="section">
-        <Text className="section-title">
-          {ASSESSMENT_TYPES.find((t) => t.value === assessmentType)?.label} 评估
-        </Text>
-      </View>
-
       {/* 问卷 */}
       {Object.entries(questions).map(([key, question]) => (
         <View key={key} className="section">
@@ -446,6 +459,11 @@ export default function AssessmentAdd() {
                 <View
                   key={opt.value}
                   className={`option-item ${answers[key] === opt.value ? "active" : ""}`}
+                  style={
+                    answers[key] === opt.value
+                      ? { borderColor: getOptionBorderColor(opt.value, question.options.length) }
+                      : undefined
+                  }
                   onClick={() => handleAnswerChange(key, opt.value)}
                 >
                   {opt.label}
@@ -475,6 +493,7 @@ export default function AssessmentAdd() {
                   <View
                     key={opt.value}
                     className={`multi-select-item ${selected ? "active" : ""}`}
+                    style={selected ? { borderColor: COLORS.orange } : undefined}
                     onClick={() => {
                       const current = (answers[key] as string[]) || [];
                       const newValue = selected
@@ -500,13 +519,6 @@ export default function AssessmentAdd() {
           )}
         </View>
       ))}
-
-      {/* 计算按钮 */}
-      <View className="section">
-        <View className="calculate-btn" onClick={handleCalculate}>
-          计算评分
-        </View>
-      </View>
 
       {/* 结果显示 */}
       {result && (
