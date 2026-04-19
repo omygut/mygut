@@ -131,7 +131,7 @@
 /* 时长选择 */
 .amount-options {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: space-between;
   gap: 12px;
 }
 
