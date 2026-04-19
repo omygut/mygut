@@ -19,9 +19,9 @@ export interface RecordTypeOption {
 
 export const RECORD_TYPE_OPTIONS: RecordTypeOption[] = [
   { value: "symptom", label: "身体状态", icon: "🌱", addPath: "/pages/symptom/add/index" },
-  { value: "medication", label: "用药", icon: "💊", addPath: "/pages/medication/add/index" },
   { value: "meal", label: "饮食", icon: "🍱", addPath: "/pages/meal/add/index" },
   { value: "stool", label: "排便", icon: "💩", addPath: "/pages/stool/add/index" },
+  { value: "medication", label: "用药", icon: "💊", addPath: "/pages/medication/add/index" },
   { value: "labtest", label: "化验", icon: "🧪", addPath: "/pages/labtest/add/index" },
   { value: "exam", label: "检查", icon: "🩺", addPath: "/pages/exam/add/index" },
   { value: "assessment", label: "评估", icon: "📋", addPath: "/pages/assessment/add/index" },
