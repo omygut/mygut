@@ -22,7 +22,6 @@ import type {
   RecordType,
 } from "../../types";
 import { DURATION_OPTIONS, INTENSITY_OPTIONS } from "../../constants/exercise";
-import ExerciseIntensityIcon from "../ExerciseIntensityIcon";
 import { ASSESSMENT_LEVELS } from "../../constants/assessment";
 import { RECORD_TYPE_OPTIONS } from "../../types";
 import "./index.css";
@@ -141,14 +140,9 @@ export default function RecordItem({ record, showTypeIcon = false }: RecordItemP
         const intensityLabel =
           INTENSITY_OPTIONS.find((i) => i.value === record.intensity)?.label ?? "";
         return (
-          <>
-            <View className="record-feeling">
-              <ExerciseIntensityIcon level={record.intensity} size={18} />
-            </View>
-            <Text className="record-desc">
-              {record.type} · {durationLabel} · {intensityLabel}
-            </Text>
-          </>
+          <Text className="record-desc">
+            {record.type} · {durationLabel} · {intensityLabel}
+          </Text>
         );
       }
       case "labtest": {
