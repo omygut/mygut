@@ -27,15 +27,6 @@ export const EXERCISE_CATEGORIES = [
     ],
   },
   {
-    name: "柔韧",
-    items: [
-      { name: "瑜伽", emoji: "🧘" },
-      { name: "普拉提", emoji: "🤸" },
-      { name: "拉伸", emoji: "🙆" },
-      { name: "太极", emoji: "☯️" },
-    ],
-  },
-  {
     name: "球类",
     items: [
       { name: "篮球", emoji: "🏀" },
@@ -50,6 +41,10 @@ export const EXERCISE_CATEGORIES = [
   {
     name: "其他",
     items: [
+      { name: "瑜伽", emoji: "🧘" },
+      { name: "普拉提", emoji: "🤸" },
+      { name: "拉伸", emoji: "🙆" },
+      { name: "太极", emoji: "☯️" },
       { name: "散步", emoji: "🚶" },
       { name: "爬山", emoji: "🧗" },
       { name: "滑雪", emoji: "⛷️" },
