@@ -158,39 +158,6 @@
   color: var(--color-primary);
 }
 
-/* 强度选择 */
-.bristol-options {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.bristol-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 12px;
-  border: 2px solid var(--color-border-light);
-  transition: all 0.2s;
-}
-
-.bristol-selected {
-  margin-top: 20px;
-  text-align: center;
-}
-
-.bristol-selected-label {
-  font-size: var(--font-size-base);
-  color: var(--color-text);
-  margin-right: 16px;
-}
-
-.bristol-selected-desc {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
-}
 
 /* 已选运动 */
 .selected-exercise {

@@ -11,7 +11,6 @@ import { formatDate, formatTime } from "../../../utils/date";
 import { showError } from "../../../utils/error";
 import CalendarPopup from "../../../components/CalendarPopup";
 import TimePicker from "../../../components/TimePicker";
-import ExerciseIntensityIcon from "../../../components/ExerciseIntensityIcon";
 import type { ExerciseRecord } from "../../../types";
 import "./index.css";
 
@@ -319,24 +318,16 @@ export default function ExerciseAdd() {
       {/* 强度 */}
       <View className="section">
         <Text className="section-title">强度</Text>
-        <View className="bristol-options">
+        <View className="amount-options">
           {INTENSITY_OPTIONS.map((option) => (
             <View
               key={option.value}
-              className={`bristol-item ${intensity === option.value ? "active" : ""}`}
+              className={`amount-item ${intensity === option.value ? "active" : ""}`}
               onClick={() => setIntensity(option.value as ExerciseRecord["intensity"])}
             >
-              <ExerciseIntensityIcon
-                level={option.value as 1 | 2 | 3}
-                size={48}
-                active={intensity === option.value}
-              />
+              <Text className="amount-label">{option.label}</Text>
             </View>
           ))}
-        </View>
-        <View className="bristol-selected">
-          <Text className="bristol-selected-label">{INTENSITY_OPTIONS[intensity - 1].label}</Text>
-          <Text className="bristol-selected-desc">{INTENSITY_OPTIONS[intensity - 1].desc}</Text>
         </View>
       </View>
 
