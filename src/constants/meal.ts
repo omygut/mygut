@@ -44,6 +44,9 @@ export const FOOD_CATEGORIES = [
       { name: "虾", emoji: "🦐" },
       { name: "螃蟹", emoji: "🦀" },
       { name: "龙虾", emoji: "🦞" },
+      { name: "牛排", emoji: "🥩" },
+      { name: "鸡", emoji: "🐔" },
+      { name: "热狗", emoji: "🌭" },
     ],
   },
   {
