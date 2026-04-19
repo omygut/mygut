@@ -145,8 +145,8 @@
 }
 
 .amount-item.active {
-  background-color: var(--color-selected-bg);
-  border-color: var(--color-selected);
+  background-color: var(--color-primary-bg);
+  border-color: var(--color-primary);
 }
 
 .amount-label {
@@ -155,7 +155,7 @@
 }
 
 .amount-item.active .amount-label {
-  color: var(--color-selected);
+  color: var(--color-primary);
 }
 
 /* 强度选择 */
