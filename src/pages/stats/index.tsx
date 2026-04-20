@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { symptomService } from "../../services/symptom";
 import { mealService } from "../../services/meal";
 import { stoolService } from "../../services/stool";
+import { exerciseService } from "../../services/exercise";
 import { medicationService } from "../../services/medication";
 import { labTestService } from "../../services/labtest";
 import { examService } from "../../services/exam";
@@ -69,6 +70,7 @@ const services = {
   medication: medicationService,
   meal: mealService,
   stool: stoolService,
+  exercise: exerciseService,
   labtest: labTestService,
   exam: examService,
   assessment: assessmentService,
